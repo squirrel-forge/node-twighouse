@@ -1,0 +1,67 @@
+<style type="text/css">
+    :root {
+        --i-text-color: white;
+        --i-background-color: deeppink;
+        --i-button-text-color: black;
+        --i-button-background-color: deepskyblue;
+    }
+    body {
+        font-family: monospace;
+        font-size: 16px;
+        line-height: 1.2;
+    }
+    header,
+    footer {
+        position: fixed;
+        left: 0;
+        width: 100%;
+        color: var(--i-text-color);
+        background-color: var(--i-background-color);
+    }
+    header {
+        top: 0;
+    }
+    footer {
+        bottom: 0;
+    }
+    header > div,
+    footer > div {
+        display: flex;
+        padding: 0.5rem 1rem;
+        width: 100%;
+        max-width: min(calc(100% - 2rem), 800px);
+    }
+    header > div > a,
+    footer > div > span {
+        margin: 0 1rem 0 auto;
+        font-weight: bold;
+    }
+    header a,
+    footer a {
+        padding: 0.2rem 0.5rem;
+        color: var(--i-button-text-color);
+        background-color: var(--i-button-background-color);
+        opacity: 1;
+        transition: 0.2s ease;
+    }
+    header a:focus,
+    header a:hover,
+    footer a:focus,
+    footer a:hover {
+        opacity: 0.5;
+    }
+    header nav,
+    footer nav {
+        margin: 0 auto 0 1rem;
+    }
+    nav ul {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+    }
+    nav li {
+        display: block;
+        margin: 0.5rem;
+        padding: 0;
+    }
+</style>

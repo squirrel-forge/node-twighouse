@@ -1,0 +1,44 @@
+{
+  "name": "@squirrel-forge/twighouse",
+  "version": "0.1.0",
+  "description": "A simple, but extendable, json+twig render tool for node",
+  "main": "index.js",
+  "scripts": {
+    "eslint": "eslint \"src/**\" --fix",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "twighouse": "bin/cli"
+  },
+  "directories": {
+    "bin": "bin",
+    "example": "example",
+    "src": "src"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/squirrel-forge/node-twighouse.git"
+  },
+  "keywords": [
+    "node",
+    "twig",
+    "json",
+    "buildtool"
+  ],
+  "author": "Daniel Hartwell <me@siux.info> (http://siux.info)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/squirrel-forge/node-twighouse/issues"
+  },
+  "homepage": "https://github.com/squirrel-forge/node-twighouse#readme",
+  "devDependencies": {
+    "eslint": "^7.32.0"
+  },
+  "dependencies": {
+    "@squirrel-forge/node-cfx": "^1.0.2",
+    "@squirrel-forge/node-objection": "^1.0.0",
+    "directory-tree": "^3.0.0",
+    "html-minifier": "^4.0.0",
+    "twig": "^1.15.4"
+  }
+}

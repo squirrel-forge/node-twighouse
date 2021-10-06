@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html dir="ltr" lang="en">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta content="IE=edge,chrome=1" http-equiv="X-UA-Compatible">
+    <meta content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" name="viewport">
+    {% block head %}
+        {% include "../partials/meta.twig" with {'meta':meta,'document':document} only %}
+        {% include "../partials/styles.twig" with {'styles':styles,'document':document} only %}
+    {% endblock %}
+</head>
+<body data-debug="true">
+    {% block before %}
+        {% include "../partials/header.twig" with {'header':header,'document':document} only %}
+    {% endblock %}
+    <main id="content" class="content">
+        {% block content %}{% endblock %}
+    </main>
+    {% block after %}
+        {% include "../partials/footer.twig" with {'footer':footer,'document':document} only %}
+    {% endblock %}
+    {% block end %}
+        <script type="text/javascript">
+
+        </script>
+    {% endblock %}
+</body>
+</html>

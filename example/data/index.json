@@ -1,0 +1,17 @@
+{
+  "meta": {
+    "__fragment": "meta"
+  },
+  "header": {
+    "__fragment": "header"
+  },
+  "footer": {
+    "__fragment": "footer"
+  },
+  "content": [
+    {
+      "__component": "copytext",
+      "content": "<h1>twighouse</h1>\n<p>A simple, but extendable, json+twig render tool for node.</p>"
+    }
+  ]
+}

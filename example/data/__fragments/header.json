@@ -1,0 +1,15 @@
+{
+  "home": {
+    "uri": "",
+    "label": "@squirrel-forge/twighouse"
+  },
+  "nav": {
+    "__directives": [
+      "navItemActive:items"
+    ],
+    "items": [
+      {"uri": "docs.html", "label": "docs", "active": false},
+      {"uri": "https://github.com/squirrel-forge/node-twighouse#readme", "label": "github", "active": false}
+    ]
+  }
+}

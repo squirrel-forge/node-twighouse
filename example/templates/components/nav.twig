@@ -1,0 +1,10 @@
+<nav>
+    <ul>
+        {% for item in component.items %}
+            <li><a href="{{ item.uri }}"
+                   {% if item.active == true %}
+                       data-active="true"
+                   {% endif %}><span>{{ item.label }}</span></a></li>
+        {% endfor %}
+    </ul>
+</nav>

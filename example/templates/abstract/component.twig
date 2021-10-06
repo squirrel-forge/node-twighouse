@@ -1,0 +1,6 @@
+{% if component is iterable %}
+    {% set embed = '../components/' ~ component.__component ~ '.twig' %}
+    {% include embed with {'component':component,'document':document} only %}
+{% else %}
+    {{ component|raw }}
+{% endif %}

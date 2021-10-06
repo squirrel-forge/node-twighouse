@@ -1,0 +1,4 @@
+{% extends 'abstract/layout.twig' %}
+{% block content %}
+    {% include "abstract/content.twig" with {'content':content,'document':document} only %}
+{% endblock %}

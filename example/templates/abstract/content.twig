@@ -1,0 +1,11 @@
+{% if content is iterable %}
+    {% if content.__component is defined %}
+        {% include "component.twig" with {'component':content,'document':document} only %}
+    {% else %}
+        {% for component in content %}
+            {% include "component.twig" with {'component':component,'document':document} only %}
+        {% endfor %}
+    {% endif %}
+{% else %}
+    {{ content|raw }}
+{% endif %}

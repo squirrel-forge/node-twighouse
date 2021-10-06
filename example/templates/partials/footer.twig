@@ -1,0 +1,8 @@
+<footer>
+    <div>
+        <span>&copy; {{ "now"|date("Y") }} {{ footer.copyright }}</span>
+        {% if footer.nav is defined %}
+            {% include "../components/nav.twig" with {'component':footer.nav,'document':document} only %}
+        {% endif %}
+    </div>
+</footer>
