@@ -41,10 +41,11 @@ function countRecursive( obj ) {
 }
 
 module.exports = {
+    __name : 'example',
     directives : {
-        navItemActive : ( items, parent, page, TwigHouse ) => {
+        navItemActive : ( items, parent, doc, TwigHouse ) => {
             for ( let i = 0; i < items.length; i++ ) {
-                if ( items[ i ].uri === page.document.uri ) {
+                if ( items[ i ].uri === doc.uri ) {
                     items[ i ].active = true;
                 }
             }

@@ -7,6 +7,7 @@
 const path = require( 'path' );
 const fs = require( 'fs' );
 const dirTree = require("directory-tree");
+const copy = require('recursive-copy');
 const Twig = require( 'twig' );
 const minify = require('html-minifier').minify;
 const cfx = require( '@squirrel-forge/node-cfx' ).cfx
@@ -38,11 +39,14 @@ module.exports = class TwigHouse {
             "minifyJS": true,
             "minifyCSS": true,
         };
+        this._resolve_fragments = true;
+        this._verbose = false;
 
         // Internal data
         this._fragments = {};
         this._pages = {};
         this._rendered = {};
+        this._directives = {};
         this._plugin_methods = {};
         this._available_methods = [ 'modify_data', 'modify_html', 'modify_twig' ];
         this._reserved_data_folders = [ '__fragments', '__plugins' ];
@@ -53,10 +57,16 @@ module.exports = class TwigHouse {
         for ( let i = 0; i < tree.length; i++ ) {
             const plugin_path = path.resolve( tree[ i ].path );
             const plugin = require( plugin_path );
-            if ( typeof plugin !== 'object' ) {
+            if ( plugin === null || typeof plugin !== 'object' ) {
                 cfx.error( 'Failed to load plugin from: ' + plugin_path );
                 continue;
             }
+            if ( typeof plugin.__name !== 'string' || !plugin.__name.length ) {
+                cfx.error( 'Plugin requires a __name property with a non empty string' );
+                continue;
+            }
+
+            // Check for available plugin methods
             for ( let j = 0; j < this._available_methods.length; j++ ) {
                 const method_name = this._available_methods[ j ];
                 if ( plugin[ method_name ] instanceof Function ) {
@@ -65,6 +75,19 @@ module.exports = class TwigHouse {
                     }
                     plugin[ method_name ].__plugin_name = tree[ i ].name;
                     this._plugin_methods[ method_name ].push( plugin[ method_name ] );
+                }
+            }
+
+            // Check for plugin directives
+            if ( plugin.directives ) {
+                for ( const [ key, fn ] of Object.entries( plugin.directives ) ) {
+                    if ( fn instanceof Function ) {
+                        fn.__plugin = plugin;
+                        if ( this._directives[ key ] ) {
+                            cfx.warn( 'Replacing ' + this._directives[ key ].__plugin.__name + '@' + key + ' with ' + plugin.__name + '@' + key );
+                        }
+                        this._directives[ key ] = fn;
+                    }
                 }
             }
         }
@@ -238,58 +261,91 @@ module.exports = class TwigHouse {
         return rel_dir;
     }
 
-    async _collect_pages( tree ) {
+    async _collect_pages( tree, limit_index = [] ) {
         for ( let i = 0; i < tree.length; i++ ) {
             if ( tree[ i ].children ) {
                 if ( !this._reserved_data_folders.includes( tree[ i ].name ) && tree[ i ].children.length ) {
-                    this._collect_pages( tree[ i ].children );
+                    await this._collect_pages( tree[ i ].children, limit_index );
                 }
             } else {
-                await this._build_page( tree[ i ] );
+                await this._build_page( tree[ i ], limit_index );
             }
         }
     }
 
-    async _build_page( file ) {
+    async _build_page( file, limit_index ) {
         const { name, dir } = path.parse( file.path );
         const rel_dir = this._get_rel_dir( dir, this._data_dir );
-        const json = await this._get_page_json( file.path );
         const ref = path.join( rel_dir, name );
-        json.document = {
+        if ( limit_index.length && !limit_index.includes( ref ) ) {
+            return;
+        }
+        const doc = {
             path : ref,
             dir : rel_dir,
             slug : name,
-            uri : ( rel_dir.length ? path.sep + rel_dir : '' )
-                + ( name !== 'index' ? path.sep + name : path.sep ),
-        }
+            uri : ( rel_dir.length ? rel_dir + path.sep : '' )
+                + ( name !== 'index' ? name + '.html' : '' ),
+        };
+        const json = await this._get_page_json( file.path, doc );
+        json.document = doc
         this._pages[ ref ] = json;
         await this._call_plugins( 'modify_data', [ ref, json, this ] );
     }
 
-    async _get_page_json( file_path ) {
+    async _get_page_json( file_path, doc ) {
         const source = await this._resolve_json( file_path );
-        const compiled = {};
-        await this._resolve_json_tree( source, compiled )
+        const compiled = source instanceof Array ? [] : {};
+        await this._resolve_json_tree( source, compiled, doc );
         return compiled;
     }
 
-    async _resolve_json_tree( source, compiled ) {
-        const has_fragment = !!source.__fragment;
-        if ( has_fragment ) {
-            const fragment = await this._get_fragment( source.__fragment );
-            if ( fragment ) {
-                Object.assign( compiled, fragment );
-            } else {
-                compiled.__error = 'Failed to resolve fragment: ' + source.__fragment;
-                cfx.error( compiled.__error );
+    async _resolve_json_tree( source, compiled, doc ) {
+        const is_array = source instanceof Array;
+        if ( is_array || isPojo( source ) ) {
+            if ( this._resolve_fragments && !is_array ) {
+                if ( source.__fragment ) {
+                    const fragment = await this._get_fragment( source.__fragment );
+                    if ( fragment ) {
+                        await this._resolve_json_tree( fragment, compiled, doc );
+                    } else {
+                        compiled.__error = 'Failed to resolve fragment: ' + source.__fragment;
+                        cfx.error( compiled.__error );
+                    }
+                }
             }
-        }
-        for ( const [ key, value ] of Object.entries( source ) ) {
-            if ( isPojo( value ) ) {
-                compiled[ key ] = {};
-                await this._resolve_json_tree( source[ key ], compiled[ key ] );
-            } else {
-                compiled[ key ] = value;
+            for ( const [ key, value ] of Object.entries( source ) ) {
+                if ( value instanceof Array ) {
+                    compiled[ key ] = [];
+                } else if ( isPojo( value ) ) {
+                    compiled[ key ] = {};
+                } else {
+                    if ( key === '__fragment' && compiled[ key ] ) {
+                        if ( !( compiled[ key ] instanceof Array ) ) {
+                            compiled[ key ] = [ compiled[ key ] ];
+                        }
+                        compiled[ key ].push( value );
+                    } else {
+                        compiled[ key ] = value;
+                    }
+                }
+                if ( compiled[ key ] !== value ) {
+                    await this._resolve_json_tree( value, compiled[ key ], doc );
+                }
+            }
+            if ( compiled.__directives instanceof Array ) {
+                for ( let i = 0; i < compiled.__directives.length; i++ ) {
+                    const [ name, key ] = compiled.__directives[ i ].split( ':' );
+                    if ( !this._directives[ name ] ) {
+                        console.error( 'Directive not defined: ' + name );
+                        continue;
+                    }
+                    if ( typeof compiled[ key ] === 'undefined' ) {
+                        console.error( 'Directive property not define: ' + name + '@' + key );
+                        continue;
+                    }
+                    this._directives[ name ]( compiled[ key ], compiled, doc, this )
+                }
             }
         }
     }
@@ -299,9 +355,6 @@ module.exports = class TwigHouse {
             await this._load_fragment( name );
         }
         if ( this._fragments[ name ] ) {
-            if ( this._fragments[ name ].__fragment_by === 'reference' ) {
-                return this._fragments[ name ];
-            }
             return objm.cloneObject( this._fragments[ name ], true );
         }
         return null;
@@ -375,6 +428,19 @@ module.exports = class TwigHouse {
         }
     }
 
+    async _deploy_example( target ) {
+        try {
+            const results = await copy( path.join( this._self, 'example' ), target );
+            if ( this._verbose ) {
+                cfx.info( 'Copied ' + results.length + ' example files' );
+            }
+        } catch ( err ) {
+            cfx.error( err );
+            return false;
+        }
+        return true;
+    }
+
     /**
      * Run generator
      * @return {Promise<number>}
@@ -382,8 +448,25 @@ module.exports = class TwigHouse {
     async run() {
 
         // Main arguments
-        const source = this._input.args[ 0 ] || '';
-        const target = this._input.args[ 1 ] || '';
+        let source = this._input.args[ 0 ] || '';
+        let target = this._input.args[ 1 ] || '';
+        if ( this._input.args.length === 1 ) {
+            target = source;
+            source = '';
+        }
+
+        // Request more info output
+        this._verbose = this._get_flag_value( '-v' ) || this._get_flag_value( '--verbose' );
+
+        // Deploy example to current directory
+        if ( this._get_flag_value( '-x' ) || this._get_flag_value( '--example' ) ) {
+            const deployed = await this._deploy_example( target );
+            if ( deployed ) {
+                cfx.success( 'Deployed example to: ' + ( target.length ? target : 'current directory' ) );
+                return 0;
+            }
+            return 3;
+        }
 
         // Get pages data tree
         const flag_data = this._get_flag_value( '-d' ) || this._get_flag_value( '--data' );
@@ -402,11 +485,35 @@ module.exports = class TwigHouse {
         // Extend twig
         await this._call_plugins( 'modify_twig', [ Twig, this ] );
 
+        // Limit to given index
+        const limit_index = ( this._get_flag_value( '-l' ) || this._get_flag_value( '--limit' ) || '' )
+            .split( ',' ).filter( ( v ) => !!v.length );
+
         // Collect page data
-        await this._collect_pages( tree_data.children );
+        await this._collect_pages( tree_data.children, limit_index );
         if ( !Object.entries( this._pages ).length ) {
             cfx.error( 'No page data generated' );
-            return 1;
+            return 2;
+        }
+
+        // Show data only
+        const show_data = this._get_flag_value( '-o' ) || this._get_flag_value( '--only' );
+        if ( show_data ) {
+            if ( this._verbose ) {
+                cfx.success( 'Showing page data for '
+                    + ( limit_index.length || 'all' )
+                    + ' page' + ( limit_index.length === 1 ? '' : 's' ) );
+                if (  limit_index.length ) {
+                    cfx.info( ' > ' + limit_index.join( ', ' ) );
+                }
+            }
+            cfx.log( JSON.stringify( this._pages, null, 2 ) );
+            if ( this._verbose ) {
+                cfx.success( 'Total pages: ' + Object.keys( this._pages ).length );
+            }
+
+            // End with success
+            return 0;
         }
 
         // Render page templates

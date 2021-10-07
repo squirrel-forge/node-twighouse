@@ -1,6 +1,6 @@
 {
   "name": "@squirrel-forge/twighouse",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A simple, but extendable, json+twig render tool for node",
   "main": "index.js",
   "scripts": {
@@ -39,6 +39,7 @@
     "@squirrel-forge/node-objection": "^1.0.0",
     "directory-tree": "^3.0.0",
     "html-minifier": "^4.0.0",
+    "recursive-copy": "^2.0.13",
     "twig": "^1.15.4"
   }
 }
