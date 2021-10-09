@@ -19,6 +19,8 @@
     }
     a {
         display: inline-block;
+        font-size: inherit;
+        line-height: inherit;
     }
     a span {
         display: inline-block;
@@ -206,11 +208,15 @@
     pre {
         display: block;
         margin: 0;
+        font-size: inherit;
+        line-height: inherit;
     }
     code {
         display: block;
         margin: 1rem 0;
         padding: 1rem;
+        font-size: 90%;
+        line-height: inherit;
         white-space: pre-wrap;
         color: var(--theme-dark-a);
         background: var(--theme-contrast-a);
@@ -218,6 +224,8 @@
     }
     table {
         display: block;
+        font-size: 90%;
+        line-height: inherit;
         border-spacing: 0.2rem;
         max-width: 100%;
         overflow-x: scroll;
@@ -266,7 +274,7 @@
         aside:hover,
         aside:focus,
         aside:focus-within {
-            transform: translateX(0);
+            transform: translateX(1px);
         }
     }
     @media screen and (max-width: 767px) {
