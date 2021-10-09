@@ -8,7 +8,7 @@
     "__directives": ["navItemActive:items"],
     "items": [
       {"uri": "docs.html", "label": "docs"},
-      {"uri": "changelog.html", "label": "changelog"},
+      {"uri": "changelog.html", "label": "changes"},
       {"uri": "https://github.com/squirrel-forge/node-twighouse", "label": "github", "blank": true},
       {"uri": "https://www.npmjs.com/package/@squirrel-forge/twighouse", "label": "npm", "blank": true}
     ]
