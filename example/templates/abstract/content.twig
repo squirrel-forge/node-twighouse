@@ -3,7 +3,7 @@
         {% include "component.twig" with {'component':content,'document':document} only %}
     {% else %}
         {% for component in content %}
-            {% include "component.twig" with {'component':component,'document':document} only %}
+            {% include "content.twig" with {'content':component,'document':document} only %}
         {% endfor %}
     {% endif %}
 {% else %}

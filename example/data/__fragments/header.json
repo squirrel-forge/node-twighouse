@@ -1,15 +1,16 @@
 {
   "home": {
-    "uri": "",
+    "__directives": ["navItemActive:uri"],
+    "uri": "index.html",
     "label": "@squirrel-forge/twighouse"
   },
   "nav": {
-    "__directives": [
-      "navItemActive:items"
-    ],
+    "__directives": ["navItemActive:items"],
     "items": [
-      {"uri": "docs.html", "label": "docs", "active": false},
-      {"uri": "https://github.com/squirrel-forge/node-twighouse#readme", "label": "github", "active": false}
+      {"uri": "docs.html", "label": "docs"},
+      {"uri": "changelog.html", "label": "changelog"},
+      {"uri": "https://github.com/squirrel-forge/node-twighouse", "label": "github", "blank": true},
+      {"uri": "https://www.npmjs.com/package/@squirrel-forge/twighouse", "label": "npm", "blank": true}
     ]
   }
 }

@@ -1,4 +1,7 @@
 {% extends 'abstract/layout.twig' %}
 {% block content %}
+    {% if aside is iterable %}
+        {% include "abstract/content.twig" with {'content':aside,'document':document} only %}
+    {% endif %}
     {% include "abstract/content.twig" with {'content':content,'document':document} only %}
 {% endblock %}

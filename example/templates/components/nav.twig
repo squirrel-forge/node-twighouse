@@ -1,7 +1,13 @@
 <nav>
     <ul>
         {% for item in component.items %}
-            <li><a href="{{ item.uri }}"
+            <li
+                {% if item.indent > 0 %}
+                    data-indent="{{ item.indent }}"
+                {% endif %}><a href="{{ item.uri }}"
+                   {% if item.blank == true %}
+                       target="_blank"
+                   {% endif %}
                    {% if item.active == true %}
                        data-active="true"
                    {% endif %}><span>{{ item.label }}</span></a></li>

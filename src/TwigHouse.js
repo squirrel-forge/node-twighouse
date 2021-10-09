@@ -11,7 +11,6 @@ const copy = require('recursive-copy');
 const Twig = require( 'twig' );
 const minify = require('html-minifier').minify;
 const cfx = require( '@squirrel-forge/node-cfx' ).cfx
-const objm = require( '@squirrel-forge/node-objection' );
 const isPojo = require( './isPojo' );
 const trimChar = require( './trimChar' );
 const parseInput = require( './parseInput' );
@@ -24,35 +23,44 @@ module.exports = class TwigHouse {
 
     /**
      * Constructor
+     * @param {Array} args
      */
-    constructor() {
+    constructor( args ) {
 
         // Install location
         this._self = path.resolve( __dirname, '../' );
 
         // Input arguments and options
-        this._input = parseInput();
-        this._data_dir = '';
-        this._default_minify = {
+        this._input = parseInput( args );
+        this.minify_options = {
             "removeComments": true,
             "collapseWhitespace": true,
             "minifyJS": true,
             "minifyCSS": true,
         };
-        this._resolve_fragments = true;
-        this._verbose = false;
+        this.resolve_fragments = true;
+        this.verbose = false;
+        this.magic_page = '__page';
+        this.template_ext = '.twig';
+        this.custom_template = '__template';
 
         // Internal data
+        this._data_dir = '';
         this._fragments = {};
         this._pages = {};
         this._rendered = {};
         this._directives = {};
         this._plugin_methods = {};
-        this._available_methods = [ 'modify_data', 'modify_html', 'modify_twig' ];
+        this._available_methods = [ 'modify_data', 'modify_html', 'modify_twig', 'modify_template' ];
         this._reserved_data_folders = [ '__fragments', '__plugins' ];
-        this._magic_page = '__page';
     }
 
+    /**
+     * Load plugins
+     * @private
+     * @param {Array} tree
+     * @return {void}
+     */
     _load_plugins( tree ) {
         for ( let i = 0; i < tree.length; i++ ) {
             const plugin_path = path.resolve( tree[ i ].path );
@@ -93,6 +101,13 @@ module.exports = class TwigHouse {
         }
     }
 
+    /**
+     * Call method on plugins
+     * @private
+     * @param {string} method
+     * @param {Array} args
+     * @return {Promise<void>}
+     */
     async _call_plugins( method, args ) {
         const methods = this._plugin_methods[ method ];
         if ( methods ) {
@@ -284,8 +299,7 @@ module.exports = class TwigHouse {
             path : ref,
             dir : rel_dir,
             slug : name,
-            uri : ( rel_dir.length ? rel_dir + path.sep : '' )
-                + ( name !== 'index' ? name + '.html' : '' ),
+            uri : ( rel_dir.length ? rel_dir + path.sep : '' ) + name + '.html',
         };
         const json = await this._get_page_json( file.path, doc );
         json.document = doc
@@ -303,7 +317,7 @@ module.exports = class TwigHouse {
     async _resolve_json_tree( source, compiled, doc ) {
         const is_array = source instanceof Array;
         if ( is_array || isPojo( source ) ) {
-            if ( this._resolve_fragments && !is_array ) {
+            if ( this.resolve_fragments && !is_array ) {
                 if ( source.__fragment ) {
                     const fragment = await this._get_fragment( source.__fragment );
                     if ( fragment ) {
@@ -344,7 +358,7 @@ module.exports = class TwigHouse {
                         console.error( 'Directive property not define: ' + name + '@' + key );
                         continue;
                     }
-                    this._directives[ name ]( compiled[ key ], compiled, doc, this )
+                    await this._directives[ name ]( compiled[ key ], compiled, doc, key, this );
                 }
             }
         }
@@ -355,7 +369,7 @@ module.exports = class TwigHouse {
             await this._load_fragment( name );
         }
         if ( this._fragments[ name ] ) {
-            return objm.cloneObject( this._fragments[ name ], true );
+            return JSON.parse( JSON.stringify( this._fragments[ name ] ) );
         }
         return null;
     }
@@ -373,37 +387,50 @@ module.exports = class TwigHouse {
         return false;
     }
 
-    async _render_page( ref, data, primary, fallback ) {
-        let template = null;
-        const primary_exists = await this._local_exists( primary );
-        if ( primary_exists ) {
-            template = primary;
-        } else {
-            const fallback_exists = await this._local_exists( fallback );
-            if ( fallback_exists ) {
-                cfx.info( 'Using fallback: ' + fallback + ' for page: ' + ref );
-                template = fallback;
+    async _get_template_path( templates, ref, data ) {
+        let available_path = null;
+        const paths = [];
+        if ( data[ this.custom_template ] ) {
+            paths.push( path.join( templates, data[ this.custom_template ] ) );
+        }
+        paths.push( path.join( templates, data.document.path ) );
+        paths.push( path.join( templates, this.magic_page ) );
+        await this._call_plugins( 'modify_template', [ paths, templates, ref, data, this ] );
+        for ( let i = 0; i < paths.length; i++ ) {
+            const path_exists = await this._local_exists( paths[ i ] + this.template_ext );
+            if ( path_exists ) {
+                available_path = paths[ i ] + this.template_ext;
+                if ( this.verbose ) {
+                    cfx.info( 'Using template: ' + paths[ i ] + ' for page: ' + ref );
+                }
+                break;
+            }
+            if ( this.verbose ) {
+                cfx.warn( 'Template not found: ' + paths[ i ] + ' for page: ' + ref );
             }
         }
-        if ( !template ) {
-            cfx.error( 'Failed to load template: ' + primary + ' or fallback: ' + fallback );
-            return;
-        }
+        return available_path;
+    }
+
+    async _render_page( ref, data, template ) {
         this._rendered[ ref ] = await this._render_template( template, data );
         await this._call_plugins( 'modify_html', [ ref, this._rendered, this ] );
     }
 
-    async _render_pages( target, templates ) {
+    async _render_pages( templates ) {
         for ( const [ key, value ] of Object.entries( this._pages ) ) {
-            const primary = path.join( templates, value.__template || value.document.path ) + '.twig';
-            const fallback = path.join( templates, this._magic_page ) + '.twig';
-            await this._render_page( key, value, primary, fallback );
+            const template = await this._get_template_path( templates, key, value );
+            if ( !template ) {
+                cfx.error( 'Failed to load any template for page: ' + key );
+                continue;
+            }
+            await this._render_page( key, value, template );
         }
     }
 
     _minify_doc( doc, data ) {
         try {
-            return minify( doc, data.__minify || this._default_minify );
+            return minify( doc, data.__minify || this.minify_options );
         } catch ( e ) {
             cfx.error( e );
         }
@@ -416,7 +443,7 @@ module.exports = class TwigHouse {
             const { dir } = path.parse( doc_path );
 
             // Ensure directory
-            const dir_available = await this._write_dir( dir );
+            const dir_available = await this._write_dir( path.resolve( dir ) );
             if ( !dir_available ) {
                 cfx.error( 'Failed to create directory: ' + dir );
                 continue;
@@ -424,14 +451,17 @@ module.exports = class TwigHouse {
 
             // Get output and write
             const doc = minify ? this._minify_doc( value, this._pages[ key ] ) : value;
-            await this._local_write( doc_path, doc );
+            const wrote = await this._local_write( doc_path, doc );
+            if ( wrote && this.verbose ) {
+                cfx.info( 'Wrote: ' + doc_path + ' for page: ' + key );
+            }
         }
     }
 
     async _deploy_example( target ) {
         try {
             const results = await copy( path.join( this._self, 'example' ), target );
-            if ( this._verbose ) {
+            if ( this.verbose ) {
                 cfx.info( 'Copied ' + results.length + ' example files' );
             }
         } catch ( err ) {
@@ -456,7 +486,7 @@ module.exports = class TwigHouse {
         }
 
         // Request more info output
-        this._verbose = this._get_flag_value( '-v' ) || this._get_flag_value( '--verbose' );
+        this.verbose = this._get_flag_value( '-v' ) || this._get_flag_value( '--verbose' );
 
         // Deploy example to current directory
         if ( this._get_flag_value( '-x' ) || this._get_flag_value( '--example' ) ) {
@@ -499,7 +529,7 @@ module.exports = class TwigHouse {
         // Show data only
         const show_data = this._get_flag_value( '-o' ) || this._get_flag_value( '--only' );
         if ( show_data ) {
-            if ( this._verbose ) {
+            if ( this.verbose ) {
                 cfx.success( 'Showing page data for '
                     + ( limit_index.length || 'all' )
                     + ' page' + ( limit_index.length === 1 ? '' : 's' ) );
@@ -508,7 +538,7 @@ module.exports = class TwigHouse {
                 }
             }
             cfx.log( JSON.stringify( this._pages, null, 2 ) );
-            if ( this._verbose ) {
+            if ( this.verbose ) {
                 cfx.success( 'Total pages: ' + Object.keys( this._pages ).length );
             }
 
@@ -519,13 +549,15 @@ module.exports = class TwigHouse {
         // Render page templates
         const flag_templates = this._get_flag_value( '-t' ) || this._get_flag_value( '--templates' );
         const path_templates = flag_templates || path.join( source, 'templates' );
-        await this._render_pages( target, path_templates );
+        await this._render_pages( path_templates );
 
         // Write pages to target
         const flag_minify = this._get_flag_value( '-m' ) || this._get_flag_value( '--minify' );
         await this._write_documents( target, flag_minify );
 
         // End with success
+        const rendered_count = Object.keys( this._rendered ).length;
+        cfx.success( 'twighouse build completed for ' + rendered_count + ' page' + ( rendered_count === 1 ? '' : 's' ) );
         return 0;
     }
 }

@@ -1,8 +1,7 @@
 {
-  "__template": "foo",
   "meta": {
     "__fragment": "meta",
-    "title": "Docs - @squirrel-forge/twighouse"
+    "title": "Changelog - @squirrel-forge/twighouse"
   },
   "header": {
     "__fragment": "header"
@@ -10,19 +9,11 @@
   "footer": {
     "__fragment": "footer"
   },
-  "aside": {
-    "__fragment": "docs/table-of-contents"
-  },
   "content": [
     {
       "__component": "section",
       "__directives": ["loadFromTwigHouse:content", "showdownConvert:content"],
-      "content": "README.md"
-    },
-    {
-      "__component": "section",
-      "__directives": ["loadFromTwigHouse:content", "showdownConvert:content"],
-      "content": "LICENSE"
+      "content": "CHANGELOG.md"
     }
   ],
   "styles": {

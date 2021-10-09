@@ -1,0 +1,10 @@
+{
+  "colors": {
+    "colorA": "lightseagreen",
+    "colorB": "tomato",
+    "contrastA": "whitesmoke",
+    "contrastB": "black",
+    "darkA": "darkslateblue",
+    "darkB": "darkslategrey"
+  }
+}

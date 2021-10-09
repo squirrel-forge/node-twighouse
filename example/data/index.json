@@ -10,8 +10,11 @@
   },
   "content": [
     {
-      "__component": "copytext",
-      "content": "<h1>twighouse</h1>\n<p>A simple, but extendable, json+twig render tool for node.</p>"
+      "__component": "section",
+      "content": "<h1>@squirrel-forge/twighouse</h1><p>A simple, but extendable, json+twig render tool for node.</p><h2>twig &amp; json</h2><p>This page was generated using a few twig templates and some json files.<br />Check the <a href=\"docs.html\">docs</a> or the <a href=\"https://github.com/squirrel-forge/node-twighouse\">code</a> for more details.</p>"
     }
-  ]
+  ],
+  "styles": {
+    "__fragment": "styles"
+  }
 }

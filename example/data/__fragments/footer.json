@@ -2,8 +2,8 @@
   "copyright": "@squirrel-forge",
   "nav": {
     "items": [
-      {"uri": "https://github.com/squirrel-forge", "label": "squirrel-forge@github", "active": false},
-      {"uri": "https://www.npmjs.com/org/squirrel-forge", "label": "squirrel-forge@npm", "active": false}
+      {"uri": "https://github.com/squirrel-forge", "label": "@github", "blank": true},
+      {"uri": "https://www.npmjs.com/org/squirrel-forge", "label": "@npm", "blank": true}
     ]
   }
 }

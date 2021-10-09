@@ -1,6 +1,9 @@
 <header>
     <div>
-        <a href="{{ header.home.uri }}"><span>{{ header.home.label }}</span></a>
+        <a href="{{ header.home.uri }}"
+            {% if header.home.active == true %}
+                data-active="true"
+            {% endif %}><span>{{ header.home.label }}</span></a>
         {% if header.nav is defined %}
             {% include "../components/nav.twig" with {'component':header.nav,'document':document} only %}
         {% endif %}

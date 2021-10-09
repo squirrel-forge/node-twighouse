@@ -1,67 +1,309 @@
 <style type="text/css">
     :root {
-        --i-text-color: white;
-        --i-background-color: deeppink;
-        --i-button-text-color: black;
-        --i-button-background-color: deepskyblue;
+        --theme-color-a: {{ styles.colors.colorA }};
+        --theme-color-b: {{ styles.colors.colorB }};
+        --theme-contrast-a: {{ styles.colors.contrastA }};
+        --theme-contrast-b: {{ styles.colors.contrastB }};
+        --theme-dark-a: {{ styles.colors.darkA }};
+        --theme-dark-b: {{ styles.colors.darkB }};
     }
-    body {
+    * {
+        box-sizing: border-box;
+    }
+    html {
         font-family: monospace;
         font-size: 16px;
         line-height: 1.2;
+        scroll-behavior: smooth;
+        scroll-padding-top: 3.2rem;
+    }
+    a {
+        display: inline-block;
+    }
+    a span {
+        display: inline-block;
+        text-decoration: inherit;
+    }
+    body {
+        margin: 0;
+        padding: 0;
+        color: var(--theme-contrast-b);
+    }
+    main {
+        padding: 1rem 0;
+    }
+    aside {
+        padding: 1rem;
+        background: var(--theme-contrast-a);
+    }
+    header {
+        background: var(--theme-color-a);
+    }
+    footer {
+        margin-bottom: 1rem;
+        background: var(--theme-color-b);
     }
     header,
     footer {
-        position: fixed;
-        left: 0;
         width: 100%;
-        color: var(--i-text-color);
-        background-color: var(--i-background-color);
-    }
-    header {
-        top: 0;
-    }
-    footer {
-        bottom: 0;
+        color: var(--theme-contrast-a);
     }
     header > div,
     footer > div {
         display: flex;
-        padding: 0.5rem 1rem;
+    }
+    header > div,
+    footer > div,
+    section > div {
+        margin: auto;
+        padding: 0 1rem;
         width: 100%;
-        max-width: min(calc(100% - 2rem), 800px);
+        max-width: min(calc(100% - 4rem), 980px);
+    }
+    section > div {
+        padding: 0 1.5rem;
     }
     header > div > a,
     footer > div > span {
-        margin: 0 1rem 0 auto;
+        margin: auto auto auto 0;
         font-weight: bold;
     }
     header a,
-    footer a {
-        padding: 0.2rem 0.5rem;
-        color: var(--i-button-text-color);
-        background-color: var(--i-button-background-color);
+    header a:visited,
+    footer a,
+    footer a:visited {
+        display: inline-block;
+        padding: 0.5rem 0.5rem;
+        color: inherit;
+        background-color: transparent;
         opacity: 1;
         transition: 0.2s ease;
     }
     header a:focus,
     header a:hover,
+    header a[data-active="true"] {
+        background: var(--theme-dark-a);
+    }
     footer a:focus,
-    footer a:hover {
-        opacity: 0.5;
+    footer a:hover,
+    footer a[data-active="true"] {
+        background: var(--theme-dark-b);
     }
     header nav,
     footer nav {
-        margin: 0 auto 0 1rem;
+        margin: auto 0 auto auto;
     }
     nav ul {
         list-style: none;
+        margin: 0;
+        padding: 0;
         display: flex;
-        flex-direction: column;
+        flex-direction: row;
     }
     nav li {
         display: block;
-        margin: 0.5rem;
+        margin: 0;
         padding: 0;
+    }
+    nav li[data-indent] {
+        padding-left: 1rem;
+    }
+    aside nav ul {
+        flex-direction: column;
+    }
+    main li + li {
+        margin-top: 1.5rem;
+    }
+    main aside li + li {
+        margin-top: 0.5rem;
+        margin-left: 0;
+    }
+    main a {
+        font-weight: bold;
+        color: var(--theme-dark-a);
+        transition: 0.2s ease;
+    }
+    main a[target="_blank"]::after {
+        top: -0.25rem;
+        margin-left: 0;
+    }
+    main a:visited {
+        color: var(--theme-dark-b);
+    }
+    main a:focus,
+    main a:hover {
+        color: var(--theme-dark-b);
+    }
+    a[target="_blank"] {
+        position: relative;
+    }
+    a[target="_blank"] span {
+        padding-right: 0.5rem;
+    }
+    a[target="_blank"]::after {
+        position: absolute;
+        top: 0.15rem;
+        margin-left: -0.5rem;
+        text-decoration: none;
+        content: '\2197';
+    }
+    aside nav a,
+    aside nav a {
+        text-decoration: none;
+    }
+    aside nav a:focus,
+    aside nav a:hover {
+        text-decoration: underline;
+    }
+    h1:first-child,
+    h2:first-child,
+    h3:first-child,
+    h4:first-child {
+        margin-top: 0;
+    }
+    h1,
+    aside h3 {
+        color: var(--theme-color-b);
+    }
+    h2, h3, h4 {
+        color: var(--theme-color-a);
+    }
+    hr {
+        border-color: var(--theme-color-b);
+    }
+    small {
+        font-size: 80%;
+        line-height: inherit;
+    }
+    pre {
+        display: block;
+        margin: 0;
+    }
+    code {
+        display: block;
+        margin: 1rem 0;
+        padding: 1rem;
+        color: var(--theme-dark-a);
+        background: var(--theme-contrast-a);
+        overflow-x: scroll;
+    }
+    table {
+        display: block;
+        border-spacing: 0.2rem;
+        max-width: 100%;
+        overflow-x: scroll;
+    }
+    th, td {
+        padding: 0.5rem;
+        vertical-align: top;
+    }
+    th {
+        font-weight: bold;
+    }
+    thead tr,
+    tr:nth-child(even) {
+        color: var(--theme-dark-a);
+        background: var(--theme-contrast-a);
+    }
+    tbody tr:nth-child(odd) {
+        color: var(--theme-dark-b);
+    }
+    td:nth-child(1),
+    td:nth-child(2),
+    td:nth-child(3) {
+        white-space: nowrap;
+        text-align: center;
+    }
+    @media screen and (min-width: 768px) {
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+        main {
+            padding: 4rem 0;
+            min-height: calc(100vh - 3.2rem);
+            overflow-x: hidden;
+        }
+        nav li + li {
+            margin-left: 0.2rem;
+        }
+        aside {
+            position: fixed;
+            padding: 1rem 0.5rem 1rem 1rem;
+            top: 3.2rem;
+            right: 0;
+            max-height: calc(100% - 7.4rem);
+            display: flex;
+            flex-direction: column;
+            transition: 0.2s ease;
+        }
+        aside div {
+            padding-right: 0.5rem;
+            width: calc(100% + 0.5rem);
+            flex-grow: 1;
+            overflow: auto;
+        }
+    }
+    @media screen and (min-width: 768px) and (max-width: 1300px) {
+        aside {
+            filter: drop-shadow(0 0 0.1rem var(--theme-contrast-b));
+            transform: translateX(calc(100% - 1rem));
+        }
+        aside::before {
+            position: absolute;
+            top: 0.75rem;
+            left: 0;
+            width: 0;
+            height: 0;
+            border-top: 1rem solid transparent;
+            border-bottom: 1rem solid transparent;
+            border-right: 1rem solid var(--theme-contrast-a);
+            transform: translateX(-1rem);
+            content: '';
+        }
+        aside:hover,
+        aside:focus,
+        aside:focus-within {
+            transform: translateX(0);
+        }
+    }
+    @media screen and (max-width: 767px) {
+        header,
+        footer {
+            padding: 0.5rem 0;
+        }
+        header nav,
+        footer nav {
+            margin: 0;
+        }
+        header > div,
+        footer > div {
+            flex-direction: column;
+        }
+        header > div,
+        footer > div,
+        section > div {
+            padding: 0;
+            max-width: calc(100% - 2rem);
+        }
+        header a,
+        footer a {
+            width: 100%;
+        }
+        nav ul {
+            flex-direction: column;
+        }
+        nav li + li {
+            margin-top: 0.2rem;
+        }
+        th:last-child {
+            min-width: 60vw;
+        }
+    }
+    @media screen and (max-width: 320px) {
+        th:last-child {
+            min-width: calc(80vw - 2rem);
+        }
     }
 </style>
