@@ -437,9 +437,10 @@ module.exports = class TwigHouse {
         return null;
     }
 
-    async _write_documents( target, minify = false ) {
-        for ( const [ key, value ] of Object.entries( this._rendered ) ) {
-            const doc_path = path.join( target, key + '.html' );
+    async _write_documents( target, minify = false, data = null, type = '.html' ) {
+        data = data || this._rendered;
+        for ( const [ key, value ] of Object.entries( data ) ) {
+            const doc_path = path.join( target, key + type );
             const { dir } = path.parse( doc_path );
 
             // Ensure directory
@@ -450,7 +451,8 @@ module.exports = class TwigHouse {
             }
 
             // Get output and write
-            const doc = minify ? this._minify_doc( value, this._pages[ key ] ) : value;
+            const doc = minify ? this._minify_doc( value, this._pages[ key ] )
+                : ( isPojo( value ) ? JSON.stringify( value, null, 2 ) : value );
             const wrote = await this._local_write( doc_path, doc );
             if ( wrote && this.verbose ) {
                 cfx.info( 'Wrote: ' + doc_path + ' for page: ' + key );
@@ -529,17 +531,24 @@ module.exports = class TwigHouse {
         // Show data only
         const show_data = this._get_flag_value( '-o' ) || this._get_flag_value( '--only' );
         if ( show_data ) {
+            const save_to = show_data === 'save';
             if ( this.verbose ) {
-                cfx.success( 'Showing page data for '
+                cfx.success( ( save_to ? 'Saving' : 'Showing' ) + ' page data for '
                     + ( limit_index.length || 'all' )
                     + ' page' + ( limit_index.length === 1 ? '' : 's' ) );
                 if (  limit_index.length ) {
                     cfx.info( ' > ' + limit_index.join( ', ' ) );
                 }
             }
-            cfx.log( JSON.stringify( this._pages, null, 2 ) );
-            if ( this.verbose ) {
-                cfx.success( 'Total pages: ' + Object.keys( this._pages ).length );
+            if ( save_to ) {
+                await this._write_documents( target, false, this._pages, '.json' );
+                const compiled_count = Object.keys( this._pages ).length;
+                cfx.success( 'twighouse compile completed for ' + compiled_count + ' page' + ( compiled_count === 1 ? '' : 's' ) );
+            } else {
+                cfx.log( JSON.stringify( this._pages, null, 2 ) );
+                if ( this.verbose ) {
+                    cfx.success( 'Total pages: ' + Object.keys( this._pages ).length );
+                }
             }
 
             // End with success

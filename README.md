@@ -44,15 +44,15 @@ the source argument is omitted and assumed to be the current working directory
 
 ### Options
 
- Short | Long        | Type  | Description
------- | ----------- | ----- | ---
-  -d   | --data      | path    | Overrides the source path argument for the data folder
-  -t   | --templates | path    | Overrides the source path argument for the templates folder
-  -l   | --limit     | str, .. | Limit which page or pages should be compiled
-  -m   | --minify    | bool    | Minifies the html output
-  -o   | --only      | bool    | Show compiled pages json only
-  -v   | --verbose   | bool    | Show additional info
-  -x   | --example   | bool    | Deploy example data and templates, accepts only one, the target, argument
+ Short | Long        | Type      | Description
+------ | ----------- | --------- | ---
+  -d   | --data      | path      | Overrides the source path argument for the data folder
+  -t   | --templates | path      | Overrides the source path argument for the templates folder
+  -l   | --limit     | str, ...  | Limit which page or pages should be compiled
+  -m   | --minify    | bool      | Minifies the html output
+  -o   | --only      | bool/save | Show/save compiled pages json only
+  -v   | --verbose   | bool      | Show additional info
+  -x   | --example   | bool      | Deploy example data and templates, accepts only one, the target, argument
 
 ## JSON input
 
