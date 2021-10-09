@@ -2,7 +2,6 @@
   "__component": "aside",
   "content": [
     "<h3>Overview</h3>",
-    "<p>&#x21E7;<a href=\"#top\">top</a></p>",
     {
       "__component": "nav",
       "items": [
