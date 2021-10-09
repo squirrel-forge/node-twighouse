@@ -84,15 +84,20 @@ Assume following data structure from the example build:
 In general you will define what you need, there are only two special properties that can be used:
 
  - The *__template* property is described [here](#loading-templates) and must be on the root object.
+```
+{
+  "__template": "{.../}template"
+}
+```
  - The *document* property gets defined before json processing and is set afterwards and may be modified via the [modify_data](#modify-data) plugin method. Note that the document data object is supplied to any [directives](#directives) running during processing.
-   ```
-   document = {
-     path: {string} The page reference, includes a full relativ path and the page slug
-     dir: {string} The relative path of this page
-     slug: {string} The page slug
-     uri: {string} The generated page uri
-   }
-   ```
+```
+{
+  path: {string} The page reference, includes a full relativ path and the page slug
+  dir: {string} The relative path of this page
+  slug: {string} The page slug
+  uri: {string} The generated page uri
+}
+```
 
 ### Fragments
 
