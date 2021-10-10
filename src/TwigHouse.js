@@ -351,11 +351,11 @@ module.exports = class TwigHouse {
                 for ( let i = 0; i < compiled.__directives.length; i++ ) {
                     const [ name, key ] = compiled.__directives[ i ].split( ':' );
                     if ( !this._directives[ name ] ) {
-                        console.error( 'Directive not defined: ' + name );
+                        cfx.error( 'Directive not defined: ' + name );
                         continue;
                     }
                     if ( typeof compiled[ key ] === 'undefined' ) {
-                        console.error( 'Directive property not define: ' + name + '@' + key );
+                        cfx.error( 'Directive property not defined: ' + name + '@' + key );
                         continue;
                     }
                     await this._directives[ name ]( compiled[ key ], compiled, doc, key, this );
