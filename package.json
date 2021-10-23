@@ -1,8 +1,8 @@
 {
   "name": "@squirrel-forge/twighouse",
-  "version": "0.3.0",
+  "version": "0.6.0",
   "description": "A simple, but extendable, json+twig render tool for node",
-  "main": "index.js",
+  "main": "src/classes/TwigHouse.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -22,7 +22,8 @@
     "node",
     "twig",
     "json",
-    "buildtool"
+    "html",
+    "build"
   ],
   "author": "Daniel Hartwell <me@siux.info> (http://siux.info)",
   "license": "MIT",

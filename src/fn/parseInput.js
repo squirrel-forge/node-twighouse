@@ -1,6 +1,3 @@
-/* global require, module, process */
-"use strict";
-
 /**
  * Parse arguments
  *
@@ -36,4 +33,4 @@ module.exports = function parseInput( args ) {
 
     // Input data
     return input;
-}
+};

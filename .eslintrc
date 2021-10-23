@@ -11,7 +11,7 @@
   },
 
   "rules": {
-    "strict": 2,
+    "strict": [ 2, "global" ],
 
     "for-direction": 2,
     "getter-return": 2,
@@ -85,9 +85,9 @@
     "template-curly-spacing": [ 2, "never" ],
     "yield-star-spacing": [ "error", { "before": true, "after": true } ],
 
-    "array-bracket-newline": [ 2, { "multiline": true, "minItems": 3 } ],
+    "array-bracket-newline": [ 2, "consistent" ],
     "array-bracket-spacing": [ 2, "always"],
-    "array-element-newline": [ 2, { "multiline": true, "minItems": 3 } ],
+    "array-element-newline": [ 2, { "multiline": true, "minItems": 7 } ],
     "block-spacing" : 2,
     "brace-style": [ 2, "1tbs", { "allowSingleLine": true } ],
     "comma-dangle": [ 2, { "arrays": "only-multiline", "objects": "only-multiline", "imports": "never", "exports": "never", "functions": "ignore" } ],

@@ -1,6 +1,3 @@
-/* global require, module */
-"use strict";
-
 /**
  * Is a plain object
  *
@@ -13,4 +10,4 @@ module.exports = function isPojo( obj ) {
         return false;
     }
     return Object.getPrototypeOf( obj ) === Object.prototype;
-}
+};

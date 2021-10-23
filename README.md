@@ -51,7 +51,7 @@ the source argument is omitted and assumed to be the current working directory
   -l   | --limit     | str, ...  | Limit which page or pages should be compiled
   -m   | --minify    | bool      | Minifies the html output
   -o   | --only      | bool/save | Show/save compiled pages json only
-  -v   | --verbose   | bool      | Show additional info
+  -i   | --verbose   | bool      | Show additional info
   -x   | --example   | bool      | Deploy example data and templates, accepts only one, the target, argument
 
 ## JSON input
@@ -72,6 +72,7 @@ Assume following data structure from the example build:
       |    `-- styles.json
       |
       +-- [__plugins]
+      |    |
       |    `-- example.js
       |
       |-- changelog.json
