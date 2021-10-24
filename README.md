@@ -131,6 +131,19 @@ Fragments work similar to fragements in graphql, though here we require valid js
 
 For explicit examples check the example source.
 
+### Document object
+
+The TwigHouseDocument object has the following properties
+
+ Name | Type | Description
+------|------|---
+ path | str  | Document path relative to root
+ dir  | str  | Directory relative to root
+ slug | str  | Document name
+ uri  | str  | Document uri
+
+The document object is added to every page data object and should not be used in the json source since it will get deleted.
+
 ### Directives
 
 Directives can modify properties and objects in the defined context of your pages json data, directives can be defined via [plugin directives](#plugin-directives) inside a [plugin](#plugins) or the [api](#api-usage) and can be used as following:

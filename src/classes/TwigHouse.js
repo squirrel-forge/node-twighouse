@@ -39,7 +39,7 @@ const isPojo = require( '../fn/isPojo' );
 
 /**
  * @typedef {Object} TwigHouseDocument
- * @property {string} path - Document path
+ * @property {string} path - Document path relative to root
  * @property {string} dir - Directory relative to root
  * @property {string} slug - Document name
  * @property {string} uri - Document uri
