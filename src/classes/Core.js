@@ -7,13 +7,23 @@ class Core {
     /**
      * Constructor
      * @constructor
+     * @param {boolean} silent - Set true to enable silent mode
      * @param {null|console} cfx - Console or alike object
      */
-    constructor( cfx = null ) {
+    constructor( silent = false, cfx = null ) {
+
+        /**
+         * Silent mode
+         * @protected
+         * @property
+         * @type {boolean}
+         */
+        this._silent = silent;
 
         /**
          * Error output
-         * @private
+         * @protected
+         * @property
          * @type {console}
          */
         this._cfx = cfx;
@@ -23,13 +33,19 @@ class Core {
      * Report
      * @private
      * @param {string} msg - Error message
-     * @param {('error'|'warn'|'info')} type - Type of reporting if cfx available
+     * @param {('error'|'warn')} type - Type of reporting if cfx available
      * @throws Error
      * @return {void}
      */
     _report( msg, type ) {
         if ( this._cfx && this._cfx[ type ] ) {
             this._cfx[ type ]( msg );
+        } else if ( type === 'warn' ) {
+            if ( !this._silent ) {
+
+                // eslint-disable-next-line no-console
+                console.warn( msg );
+            }
         } else {
             throw new Error( msg );
         }
@@ -87,7 +103,7 @@ class Core {
     _log( output, type = 'log' ) {
         if ( this._cfx && this._cfx[ type ] ) {
             this._cfx[ type ]( output );
-        } else {
+        } else if ( !this._silent ) {
 
             // eslint-disable-next-line no-console
             console.log( output );

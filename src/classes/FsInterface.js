@@ -17,10 +17,11 @@ class FsInterface extends Core {
     /**
      * Constructor
      * @constructor
+     * @param {boolean} silent - Set true to enable silent mode
      * @param {null|console} cfx - Console or alike object
      */
-    constructor( cfx = null ) {
-        super( cfx );
+    constructor( silent = false, cfx = null ) {
+        super( silent, cfx );
     }
 
     /**
@@ -43,7 +44,7 @@ class FsInterface extends Core {
                     const file_buffer = await res.buffer();
                     resolve( file_buffer );
                 } else {
-                    _self._error( res.status + '#' + res.statusText + ' for: ' + url );
+                    _self._warn( res.status + '#' + res.statusText + ' for: ' + url );
                     resolve( null );
                 }
             };
@@ -77,7 +78,8 @@ class FsInterface extends Core {
             try {
                 return JSON.parse( text );
             } catch ( e ) {
-                this._error( '[' + url + '] ' + e );
+                this._log( e );
+                this._warn( 'Failed to load JSON: ' + url );
             }
         }
         return null;
@@ -94,7 +96,7 @@ class FsInterface extends Core {
         return new Promise( ( resolve ) => {
             fs.readFile( file, enc, ( err, content ) => {
                 if ( err ) {
-                    this._error( err );
+                    this._warn( err );
                     resolve( null );
                 } else {
                     const buffer = Buffer.from( content );
@@ -127,7 +129,8 @@ class FsInterface extends Core {
             try {
                 return JSON.parse( text );
             } catch ( e ) {
-                this._error( '[' + file + '] ' + e );
+                this._log( e );
+                this._warn( 'Failed to load file: ' + file );
             }
         }
         return null;
@@ -163,7 +166,8 @@ class FsInterface extends Core {
         return new Promise( ( resolve ) => {
             fs.writeFile( file, content, ( err ) => {
                 if ( err ) {
-                    this._error( err );
+                    this._log( err );
+                    this._error( 'Failed to write file: ' + file );
                     resolve( false );
                 } else {
                     resolve( true );
@@ -182,7 +186,8 @@ class FsInterface extends Core {
         return new Promise( ( resolve ) => {
             fs.mkdir( dir, { recursive : true }, ( err ) => {
                 if ( err ) {
-                    this._error( err );
+                    this._log( err );
+                    this._error( 'Failed to create directory: ' + dir );
                     resolve( false );
                 } else {
                     resolve( true );
@@ -213,7 +218,7 @@ class FsInterface extends Core {
      * @param {('json'|'js')|Object} options - directory-tree options
      * @return {Array} - List of files
      */
-    getFileList( dir, options ) {
+    fileList( dir, options ) {
 
         // Options shortcuts
         if ( options === 'json' ) {
@@ -228,7 +233,7 @@ class FsInterface extends Core {
 
         // Build flat results array
         if ( tree && tree.children ) {
-            this._getFilesRecursiveToFlat( tree.children, result );
+            this._fileListRecursive2Flat( tree.children, result );
         }
         return result;
     }
@@ -240,12 +245,12 @@ class FsInterface extends Core {
      * @param {Array} result - Files list
      * @return {void}
      */
-    _getFilesRecursiveToFlat( tree, result ) {
+    _fileListRecursive2Flat( tree, result ) {
         for ( let i = 0; i < tree.length; i++ ) {
             if ( tree[ i ].children ) {
 
                 // Iterate down the tree
-                this._getFilesRecursiveToFlat( tree[ i ].children, result );
+                this._fileListRecursive2Flat( tree[ i ].children, result );
             } else {
 
                 // Add path to list

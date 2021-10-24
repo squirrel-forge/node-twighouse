@@ -57,6 +57,7 @@ the source argument is omitted and assumed to be the current working directory
   -o   | --output-json | bool/save | Show/save compiled pages json only
   -i   | --verbose     | bool      | Show additional info
   -s   | --strict      | bool      | Run in strict mode
+  -q   | --silent      | bool      | Run in silent mode, will throw errors, but show no other output
   -x   | --example     | bool      | Deploy example data and templates, accepts only one, the target, argument
 
 ## JSON input
@@ -124,7 +125,7 @@ For explicit examples check the example source.
 
 ### Directives
 
-Directives can modify properties and objects in the defined context of your pages json data, directives can be defined by [adding directives](#adding-directives) via a [plugin](#plugins) or the [api](#api-usage) and can be used as following:
+Directives can modify properties and objects in the defined context of your pages json data, directives can be defined via [plugin directives](#plugin-directives) inside a [plugin](#plugins) or the [api](#api-usage) and can be used as following:
 
 ```
 {
@@ -134,6 +135,10 @@ Directives can modify properties and objects in the defined context of your page
 }
 ```
 Directives are always executed in the defined order, which lets you chain them to modify in steps.
+
+#### Available directives
+
+A list of builtin directives an how they can be used.
 
 ## Templates
 
@@ -189,6 +194,7 @@ A project directory can make use of a *.twighouse* json config file to reduce th
 --------------------|--------|----------------|---
  verbose            | bool   | false          | Run in verbose mode
  strict             | bool   | false          | Run in strict mode
+ silent             | bool   | false          | Silent mode will prevent any output and should be used with strict = true
  root               | str    | ''             | Source directory, empty is the current working directory
  data               | str    | 'data'         | Data directory, if not absolute it will be attached to the root option
  fragments          | str    | 'fragments'    | Fragments directory,
@@ -212,11 +218,9 @@ A project directory can make use of a *.twighouse* json config file to reduce th
 
 ## Plugins
 
-...
+Plugin documentation is coming soon, for now please refer to the example plugin code.
 
 ### Methods
-
-...
 
 #### Plugin twig
 #### Plugin doc
@@ -242,4 +246,17 @@ await twigH.render();
 await twigH.write();
 ```
 
-If you have reached here, explore the code comments. if that does not help, please open an issue if you can't find an answer to your question, I'll be glad to help.
+Now that you have reached the end, explore the code comments. if that does not help, please open an issue if you can't find an answer to your question, the squirrel will be glad to help.
+
+## Planned features, bugs and fixes
+
+Whenever there is time and space. Bugs and fixes will always get priority above feature requests, as long as the bug is severe and cannot be solved with a workaround. Why is everything open to read and extend? It enables you to do anything you like and yes, break things in the process, but what's the worst that can happen? You understand why, learn something or even help others understand.
+
+**Upcoming features** (in no specific order)
+ - Remote template loading? is it possible with twig?
+ - Better document object
+ - Builtin usable directives
+ - Some useful twig extensions
+ - Add memory clear method for api use with options for page data, fragments, templates and last render state
+
+**A note on the side:** TwigHouse will *probably never* implement any sass, javascript or similar compile features, since it is meant for templating and does not want solve problems that belong elsewhere.

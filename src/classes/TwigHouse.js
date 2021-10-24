@@ -14,6 +14,7 @@ const isPojo = require( '../fn/isPojo' );
  * @typedef {Object} TwigHouseConfig
  * @property {boolean} verbose - Run in verbose mode, default: false
  * @property {boolean} strict - Run in strict mode, default: false
+ * @property {boolean} silent - Silent mode will prevent any output and should be used with strict = true
  * @property {string} root - Source directory, default: '',
  * @property {string} data - Data directory, default: 'data'
  * @property {string} fragments : Fragments directory, default: 'fragments'
@@ -54,20 +55,24 @@ class TwigHouse extends Core {
     /**
      * Constructor
      * @constructor
+     * @param {boolean} silent - Set true to enable silent mode
      * @param {null|console} cfx - Console or alike object
      */
-    constructor( cfx = null ) {
-        super( cfx );
+    constructor( silent = false, cfx = null ) {
+        super( silent, cfx );
 
         /**
          * Version
+         * @public
+         * @property
          * @type {string}
          */
-        this.VERSION = '0.6.0';
+        this.VERSION = '0.7.3';
 
         /**
          * Reporting mode
          * @protected
+         * @property
          * @type {null|console}
          */
         this._mode = null;
@@ -75,6 +80,7 @@ class TwigHouse extends Core {
         /**
          * Install location
          * @public
+         * @property
          * @type {string} - Install path
          */
         this.installDirectory = path.resolve( __dirname, '../../' );
@@ -82,6 +88,7 @@ class TwigHouse extends Core {
         /**
          * Default config
          * @protected
+         * @property
          * @type {TwigHouseConfig}
          */
         this._config = {
@@ -94,6 +101,9 @@ class TwigHouse extends Core {
 
             /** Strict mode will break on every error */
             strict : true,
+
+            /** Silent mode will prevent any output and should be used with strict = true */
+            silent : false,
 
             /** Source directories */
             root : '',
@@ -159,6 +169,7 @@ class TwigHouse extends Core {
         /**
          * Lock setConfig method
          * @private
+         * @property
          * @type {boolean}
          */
         this._lockConfig = false;
@@ -166,6 +177,7 @@ class TwigHouse extends Core {
         /**
          * File system interface
          * @public
+         * @property
          * @type {FsInterface}
          */
         this.fs = null;
@@ -173,27 +185,31 @@ class TwigHouse extends Core {
         /**
          * Plugins handler
          * @public
+         * @property
          * @type {Plugins}
          */
         this.plugins = null;
 
         /**
          * Loaded pages data
-         * @private
+         * @protected
+         * @property
          * @type {{name:{}}}
          */
         this._data = {};
 
         /**
          * Loaded data fragments
-         * @private
+         * @protected
+         * @property
          * @type {{name:{}}}
          */
         this._fragments = {};
 
         /**
          * Rendered html pages
-         * @private
+         * @protected
+         * @property
          * @type {{name:{}}}
          */
         this._rendered = {};
@@ -203,15 +219,43 @@ class TwigHouse extends Core {
      * Report
      * @protected
      * @param {string} msg - Error message
-     * @param {('error'|'warn'|'info')} type - Type of reporting if cfx available
+     * @param {('error'|'warn')} type - Type of reporting if cfx available
      * @throws Error
      * @return {void}
      */
     _report( msg, type ) {
-        if ( this._mode && this._mode[ type ] ) {
-            this._mode[ type ]( msg );
-        } else {
+
+        // In silent, without strict mode, errors will be swallowed
+        if ( this._config.strict ) {
             throw new Error( msg );
+        } else if ( this._mode && this._mode[ type ] ) {
+            this._mode[ type ]( msg );
+        } else if ( !this._config.silent ) {
+
+            // eslint-disable-next-line no-console
+            console.warn( '[' + type + '] ' + msg );
+        }
+    }
+
+    /**
+     * Logs to output
+     * @protected
+     * @param {*} output - Any loggable output
+     * @param {('log'|'info'|'success')} type - Type of reporting if cfx available
+     * @return {void}
+     */
+    _log( output, type = 'log' ) {
+        if ( this._config.silent ) {
+
+            // We do not want any output at all in silent mode
+            return;
+        }
+        if ( this._cfx && this._cfx[ type ] ) {
+            this._cfx[ type ]( output );
+        } else {
+
+            // eslint-disable-next-line no-console
+            console.log( output );
         }
     }
 
@@ -234,8 +278,8 @@ class TwigHouse extends Core {
             this._mode = this._cfx;
         }
 
-        // Strict mode overrides all
-        if ( this._config.strict ) {
+        // Strict and silent mode overrides all
+        if ( this._config.strict || this._config.silent ) {
             this._mode = null;
         }
     }
@@ -249,23 +293,33 @@ class TwigHouse extends Core {
      */
     setConfig( config, ignoreNull = false ) {
         if ( this._lockConfig ) {
-            if ( this._config.verbose && this._mode ) {
+            this._warn( 'The config is locked' + ( this._config.verbose ?
+                ', none of the following values were set:'
+                : ', enable verbose mode for the actual value output' )
+            );
+            if ( this._config.verbose ) {
                 this._log( config );
             }
-            this._warn( 'The config is locked' );
+            return;
         }
         if ( isPojo( config ) ) {
-            if ( ignoreNull ) {
-                const entries = Object.entries( config );
-                for ( let i = 0; i < entries.length; i++ ) {
-                    const [ key, value ] = entries[ i ];
-                    if ( value !== null ) {
-                        this._config[ key ] = value;
+            if ( Object.keys( config ).length ) {
+                if ( ignoreNull ) {
+                    const entries = Object.entries( config );
+                    for ( let i = 0; i < entries.length; i++ ) {
+                        const [ key, value ] = entries[ i ];
+                        if ( value !== null ) {
+                            this._config[ key ] = value;
+                        }
                     }
+                } else {
+                    Object.assign( this._config, config );
                 }
             } else {
-                Object.assign( this._config, config );
+                this._warn( 'Attempting to set config with no values' );
             }
+        } else {
+            this._error( 'Invalid config argument type: ' + typeof config + ' must be a plain object' );
         }
     }
 
@@ -284,7 +338,7 @@ class TwigHouse extends Core {
         this._setMode();
 
         // Init fs
-        this.fs = new FsInterface( this._mode );
+        this.fs = new FsInterface( this._config.silent, this._mode );
 
         // Load config from cwd
         await this._loadConfig();
@@ -311,31 +365,40 @@ class TwigHouse extends Core {
     }
 
     /**
-     * Load project data
-     * @param {Array<string>} limit_index - Limit the collection by reference
-     * @param {null|Array<string>} data_paths - Override or prevent loading data from data dir with an empty array
+     * Load plugins
      * @param {null|Array<string>} plugin_paths - Override or prevent loading plugins from plugin dir with an empty array
-     * @return {Promise<void>} - Possibly throws errors in strict mode
+     * @return {Promise<number>} - Number of plugins loaded
      */
-    async load( limit_index = [], data_paths = null, plugin_paths = null ) {
-
-        // Only get local plugins if none are set
+    async prepare( plugin_paths = null ) {
         let fs_plugins;
         if ( !plugin_paths ) {
+
+            // Only get local plugins if none are set
             const plugin_path = this.getPath( 'plugins' );
-            fs_plugins = await this.fs.getFileList( plugin_path, this._config.pluginExt );
+            fs_plugins = await this.fs.fileList( plugin_path, this._config.pluginExt );
         }
         const load_plugins = plugin_paths || fs_plugins;
         await this.loadPlugins( load_plugins );
+        return Object.keys( this.plugins._p ).length;
+    }
 
-        // Only get local data if none are set
+    /**
+     * Load project data
+     * @param {Array<string>} limit_index - Limit the collection by reference
+     * @param {null|Array<string>} data_paths - Override or prevent loading data from data dir with an empty array
+     * @return {Promise<number>} - Number of page data sources loaded
+     */
+    async load( limit_index = [], data_paths = null ) {
         let fs_data;
         if ( !data_paths ) {
+
+            // Only get local data if none are set
             const data_path = this.getPath( 'data' );
-            fs_data = await this.fs.getFileList( data_path, 'json' );
+            fs_data = await this.fs.fileList( data_path, 'json' );
         }
         const load_data = data_paths || fs_data;
         await this.collectPagesData( load_data, limit_index );
+        return Object.keys( this._data ).length;
     }
 
     /**
@@ -381,7 +444,7 @@ class TwigHouse extends Core {
         const load_plugins = [ ...this._config.usePlugins, ...plugin_paths ];
 
         // Init plugins and load plugins
-        this.plugins = new Plugins( [], [], this, this._mode );
+        this.plugins = new Plugins( [], [], this, this._config.silent, this._mode );
         this.plugins.load( load_plugins );
 
         // Run twig modify and allow plugins to modify config
@@ -784,14 +847,14 @@ class TwigHouse extends Core {
             if ( path_exists ) {
                 available_path = src;
                 if ( this._config.verbose ) {
-                    this._info( 'Using template: ' + paths[ i ] + ' for page: ' + ref );
+                    this._info( 'Using template: ' + paths[ i ] + this._config.templateExt + ' for page: ' + ref );
                 }
                 break;
             }
 
-            // Only notify if verbose ignoring strict mode
-            if ( this._config.verbose && this._mode ) {
-                this._warn( 'Template not found: ' + paths[ i ] + ' for page: ' + ref );
+            // Only notify if verbose
+            if ( this._config.verbose ) {
+                this._info( 'Template not found: ' + paths[ i ] + this._config.templateExt + ' for page: ' + ref );
             }
         }
         return available_path;

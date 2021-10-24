@@ -1,11 +1,14 @@
 /**
+ * @typedef {Object} CliInputData
+ * @property {Array<string>} args - List of arguments
+ * @property {Array<boolean|Array<string>>} flags - List of flags and options
+ */
+
+/**
  * Parse arguments
- *
- * @param {null|Array} args - Arguments
- *
- * @private
- *
- * @return {void}
+ * @public
+ * @param {null|Array<string>} args - Arguments
+ * @return {CliInputData} - Input data
  */
 module.exports = function parseInput( args ) {
 
@@ -13,10 +16,7 @@ module.exports = function parseInput( args ) {
     args = args || process.argv.slice( 2 );
 
     // Data
-    const input = {
-        args : [],
-        flags : [],
-    };
+    const input = { args : [], flags : [] };
 
     // Set args and flags
     for ( let i = 0; i < args.length; i++ ) {

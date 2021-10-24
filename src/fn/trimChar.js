@@ -1,9 +1,7 @@
 /**
  * Trim custom characters
- *
  * @param {string} str - String to trim
  * @param {string} charsToRemove - Characters to remove
- *
  * @return {string} - Trimmed string
  */
 module.exports = function trimChar( str, charsToRemove = ' ' ) {

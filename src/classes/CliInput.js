@@ -18,7 +18,21 @@ class CliInput {
      * @param {boolean} trimQuotes - Trim single and double quotes from options input
      */
     constructor( args = null, trimQuotes = true ) {
+
+        /**
+         * Parsed input object
+         * @protected
+         * @property
+         * @type {CliInputData}
+         */
         this._i = parseInput( args );
+
+        /**
+         * Trim quotes option
+         * @public
+         * @property
+         * @type {boolean}
+         */
         this.trimQuotes = trimQuotes;
     }
 

@@ -18,38 +18,58 @@ class Plugins extends Core {
      * @param {Array<string>} allowed - Allowed method names
      * @param {Array<string>} paths - Any number of plugin paths to load
      * @param {null|Object} context - Context object parsed to register
+     * @param {boolean} silent - Set true to enable silent mode
      * @param {null|console} cfx - Console or alike object
      */
-    constructor( allowed = [], paths = [], context = null, cfx = null ) {
-        super( cfx );
+    constructor(
+        allowed = [],
+        paths = [],
+        context = null,
+        silent = false,
+        cfx = null
+    ) {
+        super( silent, cfx );
 
         /**
          * Context
-         * @private
+         * @protected
+         * @property
          * @type {null|Object}
          */
         this._c = context;
 
         /**
          * Plugin objects
-         * @private
+         * @protected
+         * @property
          * @type {{name: Object}}
          */
         this._p = {};
 
         /**
          * Registered methods
-         * @private
+         * @protected
+         * @property
          * @type {{name: [<Function>]}}
          */
         this._m = {};
 
         /**
          * List of available method names
-         * @private
+         * @protected
+         * @property
          * @type {string[]}
          */
         this._a = [ ...allowed ];
+
+        /**
+         * Hints that are helpful for development
+         * These are outputted in verbose mode in the cli application
+         * @public
+         * @property
+         * @type {Array<string>}
+         */
+        this.hints = [];
 
         // Load plugins if provided
         if ( paths.length ) {
@@ -68,41 +88,41 @@ class Plugins extends Core {
     register( name, plugin, was_constructor ) {
         if ( this._p[ name ] ) {
             this._error( 'Plugin name "' + name + '" already loaded' );
-        } else {
-            this._p[ name ] = plugin;
+            return;
+        }
+        this._p[ name ] = plugin;
 
-            // Allow non class plugin to register methods
-            if ( !was_constructor ) {
+        // Only allow non class plugins to register methods to prevent double bindings
+        if ( was_constructor ) {
+            return;
+        }
+        let loaded_something = false;
+        if ( typeof plugin.__register === 'function' ) {
 
-                let loaded_something = false;
-                if ( typeof plugin.__register === 'function' ) {
+            // Let the plugin decide what to register
+            plugin.__register( this._c || this );
+            loaded_something = true;
 
-                    // Let the plugin decide what to register
-                    plugin.__register( this._c || this );
+        }
+        if ( this._a.length || plugin.__methods && plugin.__methods.length ) {
+
+            // We know what method names could be called
+            const names = plugin.__methods ? plugin.__methods : this._a;
+            for ( let i = 0; i < names.length; i++ ) {
+                const method = names[ i ];
+
+                // Register if method available
+                if ( typeof plugin[ method ] === 'function' ) {
+                    this.method( method, plugin[ method ] );
                     loaded_something = true;
-
-                }
-                if ( this._a.length || plugin.__methods && plugin.__methods.length ) {
-
-                    // We know what method names could be called
-                    const names = plugin.__methods ? plugin.__methods : this._a;
-                    for ( let i = 0; i < names.length; i++ ) {
-                        const method = names[ i ];
-
-                        // Register if method available
-                        if ( typeof plugin[ method ] === 'function' ) {
-                            this.method( method, plugin[ method ] );
-                            loaded_something = true;
-                        }
-                    }
-                }
-
-                // We did not load anything, lets remove the plugin and shout
-                if ( !loaded_something ) {
-                    delete this._p[ name ];
-                    this._warn( 'Removed plugin "' + name + '" that assigned no methods' );
                 }
             }
+        }
+
+        // We did not load anything, lets remove the plugin and shout
+        if ( !loaded_something ) {
+            delete this._p[ name ];
+            this._warn( 'Removed plugin "' + name + '" that assigned no methods' );
         }
     }
 
@@ -129,8 +149,35 @@ class Plugins extends Core {
         for ( let i = 0; i < paths.length; i++ ) {
 
             // Attempt to load
-            const plugin_path = path.resolve( paths[ i ] );
-            const Plugin = require( plugin_path );
+            const src_path = paths[ i ];
+            let Plugin = null;
+
+            // Attempt to load as node module
+            try {
+                Plugin = require( src_path );
+                if ( Plugin ) {
+                    this.hints.push( 'Loaded plugin from module: ' + src_path );
+                }
+            } catch ( e ) {
+
+                // We do not error here, because this is ok, it could be a local file
+                this.hints.push( 'Plugin could not be loaded as node module: ' + src_path );
+            }
+
+            // Attempt to load plugin from a resolved local path
+            const plugin_path = path.resolve( src_path );
+            if ( !Plugin ) {
+                try {
+                    Plugin = require( plugin_path );
+                    if ( Plugin ) {
+                        this.hints.push( 'Loaded plugin from path: ' + plugin_path );
+                    }
+                } catch ( e ) {
+                    this._log( e );
+                    this._error( 'Failed to load plugin from: ' + src_path + ' or ' + plugin_path );
+                    continue;
+                }
+            }
 
             // We require a constructor, instance or object
             const to = typeof Plugin;
@@ -238,7 +285,8 @@ class Plugins extends Core {
             try {
                 await methods[ i ]( ...args );
             } catch ( e ) {
-                this._error( '[' + methods[ i ].name + '@' + name + '] ' + e );
+                this._log( e );
+                this._error( 'Failed to run: ' + methods[ i ].name + '@' + name );
             }
         }
         return true;
