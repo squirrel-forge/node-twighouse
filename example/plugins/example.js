@@ -3,6 +3,7 @@
  */
 const path = require( 'path' );
 const showdown  = require( 'showdown' );
+const exampleLoader = require( '../plugin_methods/exampleLoader' );
 
 /**
  * Count object/properties array/length
@@ -116,6 +117,20 @@ module.exports = {
         'directive_loadFromTwigHouse',
         'directive_showdownConvert',
     ],
+
+    /**
+     * Register module
+     * @param {TwigHouse} twigH - TwigHouse instance
+     * @return {void}
+     */
+    __register : ( twigH ) => {
+
+        // Set loader to default remote loader
+        // Remove the condition to enable a custom loader
+        if ( twigH.__add_example_loader === true ) {
+            twigH.plugins.method( 'loader', exampleLoader );
+        }
+    },
 
     /**
      * Directive: nav item active state
