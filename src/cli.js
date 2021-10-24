@@ -68,13 +68,13 @@ module.exports = async function cli() {
         data : [ '-d', '--data-dir' ],
 
         // Set fragments directory
-        fragments : [ '-f', '--fragments-dir' ],
+        fragments : [ '-f', '--fragments' ],
 
         // Set template directory
-        templates : [ '-t', '--templates-dir' ],
+        templates : [ '-t', '--templates' ],
 
         // Set plugin directory
-        plugins : [ '-p', '--plugins-dir' ],
+        plugins : [ '-p', '--plugins' ],
 
         // Minify the compiled documents
         minify : [ '-m', '--minify' ],
@@ -160,7 +160,7 @@ module.exports = async function cli() {
         if ( save_to ) {
 
             // We want to save our data as a json files structure
-            const wrote = await twigH.writeDocuments( null, 'json' );
+            const wrote = await twigH.write( null, 'json' );
             cfx.success( 'twighouse compile completed for ' + wrote + ' page' + ( wrote === 1 ? '' : 's' ) );
 
         } else {
@@ -175,13 +175,13 @@ module.exports = async function cli() {
     }
 
     // Render pages
-    const rendered = await twigH.renderPages();
+    const rendered = await twigH.render();
     if ( config.verbose ) {
         cfx.info( 'twighouse rendered ' + rendered + ' page' + ( rendered === 1 ? '' : 's' ) );
     }
 
     // Write html documents to target
-    const wrote = await twigH.writeDocuments();
+    const wrote = await twigH.write();
     cfx.success( 'twighouse wrote ' + wrote + ' page' + ( wrote === 1 ? '' : 's' ) );
 
     // End application

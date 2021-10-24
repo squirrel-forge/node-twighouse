@@ -25,6 +25,7 @@ const isPojo = require( '../fn/isPojo' );
  * @property {boolean} processDirectives - Process directives while parsing json, default: true
  * @property {boolean} ignoreDirectives - Ignore directives that are not defined, default: true
  * @property {string} directivesProperty - Directives property name to execute from, default: '__directives'
+ * @property {string} directivePrefix - Directive method prefix, default: 'directive_'
  * @property {string} defaultTemplate - Default template, default: '__page'
  * @property {string} templateExt - Template file extension, default: '.twig'
  * @property {string} templateProperty - Template property, default: '__template'
@@ -118,6 +119,9 @@ class TwigHouse extends Core {
 
             /** Directives property name to execute from */
             directivesProperty : '__directives',
+
+            /** Directive method prefix */
+            directivePrefix : 'directive_',
 
             /** Default template if no other was found */
             defaultTemplate : '__page',
@@ -572,7 +576,7 @@ class TwigHouse extends Core {
             const directives = compiled[ this._config.directivesProperty ];
             for ( let i = 0; i < directives.length; i++ ) {
                 const [ name, key, ...args ] = directives[ i ].split( ':' );
-                const method = 'directive_' + name;
+                const method = this._config.directivePrefix + name;
                 if ( !this.plugins.has( method ) ) {
 
                     // Unregistered directive lets notify and skip along to the next
@@ -687,7 +691,7 @@ class TwigHouse extends Core {
      * @param {('html'|'json')} type - Type of data to write
      * @return {Promise<number>} - Number of documents written
      */
-    async writeDocuments( target = null, type = 'html' ) {
+    async write( target = null, type = 'html' ) {
         target = target || this.getPath( 'target' );
 
         // Select page json or compiled html as data source
@@ -833,7 +837,7 @@ class TwigHouse extends Core {
      * @public
      * @return {Promise<number>} - Number of pages rendered
      */
-    async renderPages() {
+    async render() {
         let render_count = 0;
         for ( const [ key, value ] of Object.entries( this._data ) ) {
             if ( !Object.keys( value ).length ) {

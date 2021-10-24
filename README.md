@@ -44,45 +44,59 @@ the source argument is omitted and assumed to be the current working directory
 
 ### Options
 
- Short | Long        | Type      | Description
------- | ----------- | --------- | ---
-  -d   | --data      | path      | Overrides the source path argument for the data folder
-  -t   | --templates | path      | Overrides the source path argument for the templates folder
-  -l   | --limit     | str, ...  | Limit which page or pages should be compiled
-  -m   | --minify    | bool      | Minifies the html output
-  -o   | --only      | bool/save | Show/save compiled pages json only
-  -i   | --verbose   | bool      | Show additional info
-  -x   | --example   | bool      | Deploy example data and templates, accepts only one, the target, argument
+ Short | Long          | Type      | Description
+------ | ------------- | --------- | ---
+  -v   | --version     | bool      | Show the application version
+  -d   | --data        | path      | Overrides the data folder
+  -f   | --fragments   | path      | Overrides the fragments folder
+  -t   | --templates   | path      | Overrides the templates folder
+  -p   | --plugins     | path      | Overrides the plugins folder
+  -c   | --data-source | str, ...  | Defines a list of data sources to load
+  -l   | --limit       | str, ...  | Limit which page or pages should be compiled
+  -m   | --minify      | bool      | Minifies the html output
+  -o   | --output-json | bool/save | Show/save compiled pages json only
+  -i   | --verbose     | bool      | Show additional info
+  -s   | --strict      | bool      | Run in strict mode
+  -x   | --example     | bool      | Deploy example data and templates, accepts only one, the target, argument
 
 ## JSON input
 
-The individual pages json is loaded from the *{source}/data/* directory, which has two special directories which are not read as part of the structure. The [__fragments](#fragments) are loaded at runtime by reference in your json files and any js files in the [__plugins](#plugins) directory are executed right after the pages source tree was loaded.
+The individual pages json is loaded from the *{source}/data/* directory, this directory is read recursivly by default.
+The [fragments](#fragments) are loaded at runtime by reference in your json files and any js files in the [plugins](#plugins) directory are executed right before the page sources are loaded.
 
 Assume following data structure from the example build:
 ```
 [example]
  |
  +-- [data]
+ |    |
+ |    |-- changelog.json
+ |    |-- docs.json
+ |    `-- index.json
+ |
+ +-- [fragments]
+ |    | 
+ |    |-- footer.json
+ |    |-- header.json
+ |    |-- meta.json
+ |    `-- styles.json
+ |
+ +-- [plugin_methods]
+ |    |
+ |    `-- exampleLoader.js
+ |
+ +-- [plugins]
       |
-      +-- [__fragments]
-      |    | 
-      |    |-- footer.json
-      |    |-- header.json
-      |    |-- meta.json
-      |    `-- styles.json
-      |
-      +-- [__plugins]
-      |    |
-      |    `-- example.js
-      |
-      |-- changelog.json
-      |-- docs.json
-      `-- index.json
+      `-- example.js
+
 ```
 
 ### Special properties
 
-In general you will define what you need, there are only two special properties that can be used:
+In general you will define what you need, there are only a few special properties that can be used.
+All of these can be set via the *.twighouse* config file options.
+
+### Page template
 
  - The *__template* property is described [here](#loading-templates) and must be on the root object.
 ```
@@ -119,7 +133,7 @@ Directives can modify properties and objects in the defined context of your page
   ...
 }
 ```
-Directives are always executed in the defined order, which lets you chain them to modify in steps
+Directives are always executed in the defined order, which lets you chain them to modify in steps.
 
 ## Templates
 
@@ -165,6 +179,37 @@ Possible page templates when using defaults, for page reference *{.../}index* wi
  - The **global template** fallback, when none of the above can be resolved
    ```{source}/templates/__page.twig```
 
+## Project config
+
+A project directory can make use of a *.twighouse* json config file to reduce the need to set options when compiling and also set options that cannot be set via the cli application arguments, options and flags.
+
+### Configuration options
+
+ Name               | Type   | Default        | Description
+--------------------|--------|----------------|---
+ verbose            | bool   | false          | Run in verbose mode
+ strict             | bool   | false          | Run in strict mode
+ root               | str    | ''             | Source directory, empty is the current working directory
+ data               | str    | 'data'         | Data directory, if not absolute it will be attached to the root option
+ fragments          | str    | 'fragments'    | Fragments directory,
+ plugins            | str    | 'plugins'      | Plugins directory,
+ templates          | str    | 'templates'    | Templates directory,
+ target             | str    | 'dist'         | Target directory, *note that when using the cli tool target default is:* **''**
+ resolveFragments   | bool   | true           | Resolve fragments
+ fragmentProperty   | str    | '__fragment'   | Fragment property name to load from
+ processDirectives  | bool   | true           | Process directives while parsing json 
+ ignoreDirectives   | bool   | true           | Ignore directives that are not defined
+ directivesProperty | str    | '__directives' | Directives property name to execute from
+ directivePrefix    | str    | 'directive_'   | Directive method prefix
+ defaultTemplate    | str    | '__page'       | Default template
+ templateExt        | str    | '.twig'        | Template file extension
+ templateProperty   | str    | '__template'   | Template property to use on page data
+ usePlugins         | Array  | []             | Plugin module names or paths to load
+ pluginExt          | str    | 'js'           | Plugin file extension
+ minify             | bool   | false          | Minify document output
+ minifyProperty     | str    | '__minify'     | Minify options property to use on page data
+ minifyOptions      | Object | { removeComments : true, collapseWhitespace : true, minifyJS : true, minifyCSS : true } | Minify plugin options
+
 ## Plugins
 
 ...
@@ -173,47 +218,28 @@ Possible page templates when using defaults, for page reference *{.../}index* wi
 
 ...
 
-#### Modify twig
+#### Plugin twig
+#### Plugin doc
+#### Plugin data
+#### Plugin template
+#### Plugin html
+#### Plugin loader
 
-...
-
-#### Modify data
-
-...
-
-#### Modify template
-
-...
-
-#### Modify html
-
-...
-
-### Adding directives
+### Plugin directives
 
 ...
 
 ## Api usage
 
-You can require the TwigHouse class in your node script and run it, change internal options and extend it.
+You can require the TwigHouse class in your node script and run it, change internal options and extend it easily.
 
 ```
 const TwigHouse = require('@squirrel-forge/twighouse');
-const twigH = new TwigHouse( ['example','-x'] );
-twigH.verbose = false;
-twigH.minify_options.removeComments = true;
-twigH.magic_page = '__page';
-const exit_code = await twigH.run();
+const twigH = new TwigHouse( console );
+await twigH.init();
+await twigH.load();
+await twigH.render();
+await twigH.write();
 ```
 
-### Setting arguments and options
-
-...
-
-### Adding plugin methods
-
-...
-
-### Adding directives
-
-...
+If you have reached here, explore the code comments. if that does not help, please open an issue if you can't find an answer to your question, I'll be glad to help.
