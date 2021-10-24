@@ -60,6 +60,14 @@ the source argument is omitted and assumed to be the current working directory
   -q   | --silent      | bool      | Run in silent mode, will throw errors, but show no other output
   -x   | --example     | bool      | Deploy example data and templates, accepts only one, the target, argument
 
+#### Using url data
+
+You can use urls in certain parts of the application, this example will render using local templates, but loads its data and fragments from urls. Check the [planned features](#planned-features-bugs-and-fixes) for updates.
+ 
+```
+twighouse example dist -c=https://raw.githubusercontent.com/squirrel-forge/node-twighouse/main/example/data/index.json -d=https://raw.githubusercontent.com/squirrel-forge/node-twighouse/main/example/data -f=https://raw.githubusercontent.com/squirrel-forge/node-twighouse/main/example/fragments -m
+```
+
 ## JSON input
 
 The individual pages json is loaded from the *{source}/data/* directory, this directory is read recursivly by default.
