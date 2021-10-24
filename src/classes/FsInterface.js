@@ -3,6 +3,7 @@
  */
 const path = require( 'path' );
 const fs = require( 'fs' );
+const fetch = require( 'node-fetch' );
 const dirTree = require( 'directory-tree' );
 const Core = require( './Core' );
 
@@ -20,6 +21,66 @@ class FsInterface extends Core {
      */
     constructor( cfx = null ) {
         super( cfx );
+    }
+
+    /**
+     * Read remote file as buffer
+     * @public
+     * @param {string} url - Url to file
+     * @return {Promise<Buffer|null>} - Buffer or null on error
+     */
+    remote( url ) {
+        const _self = this;
+        return new Promise( ( resolve ) => {
+
+            /**
+             * Successfully loaded
+             * @param {Object} res - Fetch buffer
+             * @return {Promise<void>} - Possibly throws errors in strict mode
+             */
+            const success = async function( res ) {
+                if ( res.ok ) {
+                    const file_buffer = await res.buffer();
+                    resolve( file_buffer );
+                } else {
+                    _self._error( res.status + '#' + res.statusText + ' for: ' + url );
+                    resolve( null );
+                }
+            };
+            fetch( url ).then( success ).catch( ( err ) => {
+                this._error( err );
+                resolve( null );
+            } );
+        } );
+    }
+
+    /**
+     * Read remote text file
+     * @public
+     * @param {string} url - Url to file
+     * @return {Promise<string|null>} - UTF8 string
+     */
+    async remoteText( url ) {
+        const buf = await this.remote( url );
+        return buf ? buf.toString( 'utf8' ) : null;
+    }
+
+    /**
+     * Read remote json file
+     * @public
+     * @param {string} url - Url to file
+     * @return {Promise<Array|Object|null>} - JSON data
+     */
+    async remoteJSON( url ) {
+        const text = await this.remoteText( url );
+        if ( text ) {
+            try {
+                return JSON.parse( text );
+            } catch ( e ) {
+                this._error( '[' + url + '] ' + e );
+            }
+        }
+        return null;
     }
 
     /**
@@ -44,7 +105,7 @@ class FsInterface extends Core {
     }
 
     /**
-     * Resolve text file
+     * Read local text file
      * @public
      * @param {string} file - Path to file
      * @return {Promise<string|null>} - UTF8 string
@@ -55,7 +116,7 @@ class FsInterface extends Core {
     }
 
     /**
-     * Resolve json file
+     * Read local json file
      * @public
      * @param {string} file - Path to file
      * @return {Promise<Array|Object|null>} - JSON data

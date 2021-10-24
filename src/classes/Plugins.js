@@ -17,10 +17,18 @@ class Plugins extends Core {
      * @constructor
      * @param {Array<string>} allowed - Allowed method names
      * @param {Array<string>} paths - Any number of plugin paths to load
+     * @param {null|Object} context - Context object parsed to register
      * @param {null|console} cfx - Console or alike object
      */
-    constructor( allowed = [], paths = [], cfx = null ) {
+    constructor( allowed = [], paths = [], context = null, cfx = null ) {
         super( cfx );
+
+        /**
+         * Context
+         * @private
+         * @type {null|Object}
+         */
+        this._c = context;
 
         /**
          * Plugin objects
@@ -44,7 +52,9 @@ class Plugins extends Core {
         this._a = [ ...allowed ];
 
         // Load plugins if provided
-        this.load( paths );
+        if ( paths.length ) {
+            this.load( paths );
+        }
     }
 
     /**
@@ -64,12 +74,15 @@ class Plugins extends Core {
             // Allow non class plugin to register methods
             if ( !was_constructor ) {
 
+                let loaded_something = false;
                 if ( typeof plugin.__register === 'function' ) {
 
                     // Let the plugin decide what to register
-                    plugin.__register( this );
+                    plugin.__register( this._c || this );
+                    loaded_something = true;
 
-                } else if ( this._a.length || plugin.__methods && plugin.__methods.length ) {
+                }
+                if ( this._a.length || plugin.__methods && plugin.__methods.length ) {
 
                     // We know what method names could be called
                     const names = plugin.__methods ? plugin.__methods : this._a;
@@ -79,9 +92,13 @@ class Plugins extends Core {
                         // Register if method available
                         if ( typeof plugin[ method ] === 'function' ) {
                             this.method( method, plugin[ method ] );
+                            loaded_something = true;
                         }
                     }
-                } else {
+                }
+
+                // We did not load anything, lets remove the plugin and shout
+                if ( !loaded_something ) {
                     delete this._p[ name ];
                     this._warn( 'Removed plugin "' + name + '" that assigned no methods' );
                 }
@@ -149,7 +166,7 @@ class Plugins extends Core {
 
                 // Construct instance
                 name = Plugin.name;
-                obj = new Plugin( this );
+                obj = new Plugin( this._c || this );
             }
 
             // Register

@@ -7,6 +7,7 @@ const minify = require( 'html-minifier' ).minify;
 const Core = require( './Core' );
 const FsInterface = require( './FsInterface' );
 const Plugins = require( './Plugins' );
+const isUrl = require( '../fn/isUrl' );
 const isPojo = require( '../fn/isPojo' );
 
 /**
@@ -351,7 +352,7 @@ class TwigHouse extends Core {
 
             // Other paths are nested below root
             compiled = this._config[ name ];
-            if ( compiled.substr( 0, 1 ) !== path.sep ) {
+            if ( !isUrl( compiled ) && compiled[ 0 ] !== path.sep ) {
                 compiled = path.join( this._config.root, this._config[ name ] );
             }
 
@@ -361,7 +362,7 @@ class TwigHouse extends Core {
         }
 
         // Return path in required mode
-        if ( absolute ) {
+        if ( absolute && !isUrl( compiled ) ) {
             return path.resolve( compiled );
         }
         return compiled;
@@ -375,8 +376,9 @@ class TwigHouse extends Core {
     async loadPlugins( plugin_paths = [] ) {
         const load_plugins = [ ...this._config.usePlugins, ...plugin_paths ];
 
-        // Init plugins
-        this.plugins = new Plugins( [], load_plugins, this._mode );
+        // Init plugins and load plugins
+        this.plugins = new Plugins( [], [], this, this._mode );
+        this.plugins.load( load_plugins );
 
         // Run twig modify and allow plugins to modify config
         await this.plugins.run( 'twig', [ Twig, this ] );
@@ -403,10 +405,16 @@ class TwigHouse extends Core {
 
             } else {
 
-                // By default we load from the local filesystem
+                // By default we can load from the local or a remote filesystem
                 page_data = await this.buildPageData( ...args );
             }
-            if ( page_data && Object.keys( page_data ).length ) {
+
+            // Ensure page data content
+            if ( page_data instanceof Array && page_data.length
+                && typeof page_data[ 0 ] === 'string' && page_data[ 0 ].length
+                && typeof page_data[ 1 ] === 'object' && page_data[ 1 ] !== null
+                && Object.keys( page_data[ 1 ] ).length
+            ) {
 
                 // Save the data for processing
                 const [ ref, json ] = page_data;
@@ -435,13 +443,21 @@ class TwigHouse extends Core {
         }
 
         // Create document global data
-        const doc = this._makeDocument( ref, rel_dir, name );
+        const doc = this.makeDocument( ref, rel_dir, name );
 
         // Run plugins data method
         await this.plugins.run( 'doc', [ ref, doc, this ] );
 
         // Load page json
         const json = await this.getPageJson( file, doc );
+
+        // Empty json data
+        if ( json instanceof Array && !json.length || !Object.keys( json ).length ) {
+            this._error( 'Page contains no data: ' + ref );
+            return null;
+        }
+
+        // Assign document
         json.document = doc;
 
         // Run plugins data method
@@ -453,13 +469,13 @@ class TwigHouse extends Core {
 
     /**
      * Make page document object
-     * @private
+     * @public
      * @param {string} ref - Page reference
      * @param {string} rel_dir - Page relative path
      * @param {string} name - Page name
      * @return {TwigHouseDocument} - TwigHouseDocument object
      */
-    _makeDocument( ref, rel_dir, name ) {
+    makeDocument( ref, rel_dir, name ) {
         return {
             path : ref,
             dir : rel_dir,
@@ -485,21 +501,26 @@ class TwigHouse extends Core {
      * @return {Promise<Array|Object>} - Compiled page json
      */
     async getPageJson( file, doc ) {
-        const source = await this.fs.readJSON( file );
-        const compiled = source instanceof Array ? [] : {};
-        await this._resolvePageJsonTree( source, compiled, doc );
+        let source;
+        if ( isUrl( file ) ) {
+            source = await this.fs.remoteJSON( file );
+        } else {
+            source = await this.fs.readJSON( file );
+        }
+        const compiled = {};
+        await this.resolvePageJsonTree( source, compiled, doc );
         return compiled;
     }
 
     /**
      * Resolve json tree
-     * @protected
+     * @public
      * @param {Array|Object} source - JSON source
      * @param {Array|Object} compiled - Target reference
      * @param {TwigHouseDocument} doc - Document object
      * @return {Promise<void>} - Possibly throws errors in strict mode
      */
-    async _resolvePageJsonTree( source, compiled, doc ) {
+    async resolvePageJsonTree( source, compiled, doc ) {
         const is_array = source instanceof Array;
         if ( is_array || isPojo( source ) ) {
 
@@ -507,7 +528,7 @@ class TwigHouse extends Core {
             if ( this._config.resolveFragments && !is_array && source[ this._config.fragmentProperty ] ) {
                 const fragment = await this._resolveFragment( source[ this._config.fragmentProperty ] );
                 if ( fragment ) {
-                    await this._resolvePageJsonTree( fragment, compiled, doc );
+                    await this.resolvePageJsonTree( fragment, compiled, doc );
                 } else {
                     compiled.__error = compiled.__error || [];
                     compiled.__error.push( 'Failed to resolve fragment: ' + source[ this._config.fragmentProperty ] );
@@ -530,38 +551,49 @@ class TwigHouse extends Core {
                     compiled[ key ] = value;
                 }
                 if ( compiled[ key ] !== value ) {
-                    await this._resolvePageJsonTree( value, compiled[ key ], doc );
+                    await this.resolvePageJsonTree( value, compiled[ key ], doc );
                 }
             }
 
             // Process directives
-            if ( this._config.processDirectives && compiled[ this._config.directivesProperty ] instanceof Array ) {
-                const directives = compiled[ this._config.directivesProperty ];
-                for ( let i = 0; i < directives.length; i++ ) {
-                    const [ name, key, ...args ] = directives[ i ].split( ':' );
-                    const method = 'directive_' + name;
-                    if ( !this.plugins.has( method ) ) {
+            await this.processDirectives( compiled, doc );
+        }
+    }
 
-                        // Unregistered directive lets notify and skip along to the next
-                        const msg = 'Directive not defined: ' + name;
-                        if ( this._config.ignoreDirectives ) {
-                            if ( this._config.verbose ) {
-                                this._info( msg );
-                            }
-                        } else {
-                            this._warn( msg );
+    /**
+     * Process directives
+     * @public
+     * @param {Object} compiled - Compiled object
+     * @param {TwigHouseDocument} doc - TwigHouseDocument object
+     * @return {Promise<void>} - Possibly throws errors in strict mode
+     */
+    async processDirectives( compiled, doc ) {
+        if ( this._config.processDirectives && compiled[ this._config.directivesProperty ] instanceof Array ) {
+            const directives = compiled[ this._config.directivesProperty ];
+            for ( let i = 0; i < directives.length; i++ ) {
+                const [ name, key, ...args ] = directives[ i ].split( ':' );
+                const method = 'directive_' + name;
+                if ( !this.plugins.has( method ) ) {
+
+                    // Unregistered directive lets notify and skip along to the next
+                    const msg = 'Directive not defined: ' + name;
+                    if ( this._config.ignoreDirectives ) {
+                        if ( this._config.verbose ) {
+                            this._info( msg );
                         }
-                        continue;
+                    } else {
+                        this._warn( msg );
                     }
-
-                    // Notify target property not set
-                    if ( this._config.verbose && typeof compiled[ key ] === 'undefined' ) {
-                        this._warn( 'Directive property not defined: ' + name + '@' + key );
-                    }
-
-                    // Run directive methods
-                    await this.plugins.run( method, [ compiled[ key ], key, compiled, doc, this, ...args ] );
+                    continue;
                 }
+
+                // Notify target property not set
+                if ( this._config.verbose && typeof compiled[ key ] === 'undefined' ) {
+                    this._warn( 'Directive property not defined: ' + name + '@' + key );
+                }
+
+                // Run directive methods
+                await this.plugins.run( method, [ compiled[ key ], key, compiled, doc, this, ...args ] );
             }
         }
     }
@@ -590,9 +622,22 @@ class TwigHouse extends Core {
      */
     async _loadFragment( name ) {
         const frag_path = path.join( this.getPath( 'fragments' ), name + '.json' );
-        const exists = await this.fs.exists( frag_path );
+        let exists = false, json_exists = null;
+        if ( isUrl( frag_path ) ) {
+            json_exists = await this.fs.remoteJSON( frag_path );
+            if ( json_exists && typeof json_exists === 'object' && Object.keys( json_exists ).length ) {
+                exists = true;
+            }
+        } else {
+            exists = await this.fs.exists( frag_path );
+        }
         if ( exists ) {
-            const json = await this.fs.readJSON( frag_path );
+            let json;
+            if ( json_exists ) {
+                json = json_exists;
+            } else {
+                json = await this.fs.readJSON( frag_path );
+            }
             if ( json ) {
                 this._fragments[ name ] = json;
                 return true;
@@ -603,13 +648,19 @@ class TwigHouse extends Core {
 
     /**
      * Document data available
-     * @protected
+     * @public
      * @param {Object} data - Page data
      * @return {boolean} - True if TwigHouseDocument is available
      */
-    _documentAvailable( data ) {
-        if ( data && data.document ) {
-            return data.document.path && data.document.dir && data.document.slug && data.document.uri;
+    documentAvailable( data ) {
+        if ( data && typeof data.document === 'object' ) {
+            const check_str = [ 'path', 'dir', 'slug', 'uri' ];
+            for ( let i = 0; i < check_str.length; i++ ) {
+                if ( typeof data.document[ check_str[ i ] ] !== 'string' ) {
+                    return false;
+                }
+            }
+            return true;
         }
         return false;
     }
@@ -688,7 +739,7 @@ class TwigHouse extends Core {
      * @return {Promise<null>} - Possibly throws errors in strict mode
      */
     async _getTemplatePath( ref, data ) {
-        if ( !this._documentAvailable( data ) ) {
+        if ( !this.documentAvailable( data ) ) {
             this._error( 'Page data must contain a valid document property' );
             return null;
         }
@@ -713,9 +764,21 @@ class TwigHouse extends Core {
 
         // Select the first available path
         for ( let i = 0; i < paths.length; i++ ) {
-            const path_exists = await this.fs.exists( paths[ i ] + this._config.templateExt );
+            const src = paths[ i ] + this._config.templateExt;
+            let path_exists = false;
+            if ( isUrl( src ) ) {
+
+                // Cannot load templates from urls
+                path_exists = false;
+                this._error( 'Cannot load template from url: ' + src );
+
+            } else {
+                path_exists = await this.fs.exists( src );
+            }
+
+            // Set available
             if ( path_exists ) {
-                available_path = paths[ i ] + this._config.templateExt;
+                available_path = src;
                 if ( this._config.verbose ) {
                     this._info( 'Using template: ' + paths[ i ] + ' for page: ' + ref );
                 }

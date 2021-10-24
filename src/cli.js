@@ -38,11 +38,20 @@ module.exports = async function cli() {
 
         // Only output the generated json
         output : [ '-o', '--output-json' ],
+
+        // Data sources overrides default local read
+        data : [ '-c', '--data-source', '' ],
     } );
 
     // Limit option must be an Array
     if ( !( options.limit instanceof Array ) ) {
         options.limit = options.limit.split( ',' )
+            .filter( ( v ) => { return !!v.length; } );
+    }
+
+    // Data sources option must be an Array
+    if ( !( options.data instanceof Array ) ) {
+        options.data = options.data.split( ',' )
             .filter( ( v ) => { return !!v.length; } );
     }
 
@@ -132,9 +141,10 @@ module.exports = async function cli() {
     // Load plugins and source data
     //  - Loads plugins from the plugins directory
     //  - And from the config option TwigHouseConfig.usePlugins
-    await twigH.load( options.limit );
+    //  - Overrides source path data if set as option
+    await twigH.load( options.limit, options.data.length ? options.data : null );
 
-    // Let show or write the loaded/compiled page data
+    // Lets show or write the loaded/compiled page data
     if ( options.output ) {
         const save_to = options.output === 'save';
 
@@ -172,7 +182,7 @@ module.exports = async function cli() {
 
     // Write html documents to target
     const wrote = await twigH.writeDocuments();
-    cfx.success( 'twighouse rendered and wrote ' + wrote + ' page' + ( wrote === 1 ? '' : 's' ) );
+    cfx.success( 'twighouse wrote ' + wrote + ' page' + ( wrote === 1 ? '' : 's' ) );
 
     // End application
     process.exit( 0 );

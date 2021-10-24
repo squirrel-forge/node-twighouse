@@ -1,6 +1,6 @@
 {
   "name": "@squirrel-forge/twighouse",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "A simple, but extendable, json+twig render tool for node",
   "main": "src/classes/TwigHouse.js",
   "scripts": {
@@ -31,10 +31,14 @@
     "url": "https://github.com/squirrel-forge/node-twighouse/issues"
   },
   "homepage": "https://github.com/squirrel-forge/node-twighouse#readme",
+  "devDependencies": {
+    "showdown": "^1.9.1"
+  },
   "dependencies": {
     "@squirrel-forge/node-cfx": "^1.0.2",
     "directory-tree": "^3.0.0",
     "html-minifier": "^4.0.0",
+    "node-fetch": "^2.6.1",
     "recursive-copy": "^2.0.13",
     "twig": "^1.15.4"
   }
