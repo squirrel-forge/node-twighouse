@@ -137,7 +137,7 @@ Directives can modify properties and objects in the defined context of your page
 
 ```
 {
-  "__directives": ["directive_method_name:property_to_use", ...],
+  "__directives": ["directive_method_name:property_to_use:additional_arguments", ...],
   "property_to_use": "*",
   ...
 }
@@ -147,6 +147,10 @@ Directives are always executed in the defined order, which lets you chain them t
 #### Available directives
 
 A list of builtin directives an how they can be used.
+
+##### Directive navItemActive
+
+...
 
 ## Templates
 
@@ -225,20 +229,247 @@ A project directory can make use of a *.twighouse* json config file to reduce th
 
 ## Plugins
 
-Plugin documentation is coming soon, for now please refer to the example plugin code.
+Plugins can be loaded from local files in the plugins directory or be node modules, plugins cannot be loaded by remote for security reasons. Custom plugins can be placed in the plugins directory where they will be autoloaded or any other directory accessible in your filesystem using a relative path with the usePlugins configuration option in your project config.
+You may also set node module names in the usePlugins configuration option to load a plugin from an installable node module. 
+
+### Plugin types
+
+Plugins can be supplied in three ways, class constructors, class instance or plain object.
+
+#### Plugin type: plain object
+
+The plain object plugin is the simplest form, a basic structure, for details please refer to the example plugin.
+
+```
+/**
+ * Plain object plugin
+ * @type {TwigHousePluginObject}
+ */
+module.exports = {
+
+    /**
+     * Plugin name for reference and error tracking
+     * @public
+     * @property
+     * @type {string}
+     */
+    __name : 'example',
+
+    /**
+     * Define which plugin handlers to use
+     * @public
+     * @property
+     * @type {Array<string>}
+     */
+    __methods : [ 'twig', 'doc', 'data', 'template', 'html' ],
+
+    /**
+     * Register callback to add methods, directive and loaders
+     * @public
+     * @param {TwigHouse} twigH - TwigHouse instance
+     * @return {void}
+     */
+    __register : ( twigH ) => {}
+
+    // Define our plugin methods
+    twig     : () => {},
+    doc      : () => {},
+    data     : () => {},
+    template : () => {},
+    html     : () => {},
+};
+
+```
+
+#### Plugin type: class constructor
+
+The class plugin will use the constructors name as reference, all method, directives, loaders, etc. need to be set in the constructor method via the TwigHouse instance.
+
+```
+/**
+ * Class plugin
+ * @class
+ * @type {TwigHousePluginClass}
+ */
+module.exports = class Example {
+
+    /**
+     * Constructor
+     * @constructor
+     * @param {TwigHouse} twigH - TwigHouse instance
+     */
+    constructor( twigH ) {
+
+        // Use any api methods
+    }
+};
+
+```
+
+#### Plugin type: class instance
+
+The class instance plugin will have the gains of using a class combined with the features of a plain object plugin with automatic assignment.
+
+```
+/**
+ * Class plugin
+ * @class
+ * @type {TwigHousePluginClass}
+ */
+class Example {
+
+    /**
+     * Constructor
+     * @constructor
+     */
+    constructor() {}
+
+    // The name is derrived from the class constructor and we have to use it,
+    // but here we can now use the __methods property and __register method just as with the plain object
+}
+module.exports = new Example();
+
+```
 
 ### Methods
 
+Plugin methods can be defined as described in the previous section, following all available method names that can be set. Please check the TwigHouse source comments and the example plugin for implementation details.
+
 #### Plugin twig
+
+```
+/**
+ * Extend TwigHouse or the twig template engine
+ * Run directly after loading the json tree and plugins, but before reading or processing the data
+ * @param {Twig} Twig - Twig template engine
+ * @param {TwigHouse} twigH - TwigHouse instande
+ * @return {void}
+ */
+function twig( Twig, twigH ) {
+
+    // Use this to set TwigHouse options and or extend twig with filters etc
+}
+
+```
+
 #### Plugin doc
+
+```
+/**
+ * Modify document data
+ * @param {string} ref - Page reference
+ * @param {TwigHouseDocument} doc - Document object
+ * @param {TwigHouse} twigH - TwigHouse instance
+ * @return {void}
+ */
+function doc( ref, doc, twigH ) {
+    
+    // Use this to modify the document object for a given page reference
+}
+
+```
+
 #### Plugin data
+
+```
+/**
+ * Modify page data
+ * @param {string} ref - Page reference
+ * @param {Object} data - Page data
+ * @param {TwigHouse} twigH - TwigHouse instance
+ * @return {void}
+ */
+function data( ref, data, twigH ) {
+
+    // Use this to modify the page data object after it has been resolved
+}
+
+```
+
 #### Plugin template
+
+```
+/**
+ * Modify template paths array for page template loading
+ * @param {Array<string>} paths - Template paths
+ * @param {string} templates - Template root
+ * @param {string} ref - Template reference
+ * @param {Object} data - Page data
+ * @param {TwigHouse} twigH - TwigHouse instance
+ * @return {void}
+ */
+function template( paths, templates, ref, data, twigH ) {
+
+    // Use this to modify template paths/references that will be checked for availability
+}
+
+```
+
 #### Plugin html
+
+```
+/**
+ * Modify the rendered html
+ * @param {string} ref - Page reference
+ * @param {string} rendered - Rendered html
+ * @param {TwigHouse} twigH - TwigHouse instance
+ * @return {void}
+ */
+module.exports = function exampleHTML( ref, rendered, twigH ) {
+
+    // Use this to modify the rendered html string
+}
+
+```
+
 #### Plugin loader
+
+```
+/**
+ * Example data loader
+ * @param {string} url - Page data url
+ * @param {Array<string>} limit - Limit the collection by reference
+ * @param {[string,Object]} data - Page data reference
+ * @param {TwigHouse} twigH - TwigHouse instance
+ * @return {void}
+ */
+function loader( url, limit, data, twigH ) {
+    // Use this to implement your own reference loading logic
+    // Check the example loader for implementation details.
+};
+```
 
 ### Plugin directives
 
-...
+Directives can be registered the following way, see how to define [directives](#directives) in your source json, check the example directives for implementation details.
+
+Activate a builtin directive, see the [directives](#available-directives) list for available names.
+
+```
+twigH.useDirective( 'navItemActive' );
+
+```
+
+Registering a custom directive, they can be sync or async functions or may return a Promise, but any actual return value is ignored and discarded. Any changes need to be made to Object type values. From the arguments, consider this definition: **parent[ key ] = value** so if value is a string, you need to set *parent[ key ] = 'new value'* to a new value. Any additional params specific to the directive are supplied after the TwigHouse instance to ensure a cleaner argument structure.
+
+```
+/**
+ * Directive
+ * @param {string} value - Property value
+ * @param {string} key - Property key
+ * @param {Object} parent - Property parent
+ * @param {TwigHouseDocument} doc - Document object
+ * @param {TwigHouse} twigH - TwigHouse instance
+ * @param {...} ...
+ * @return {void}
+ */
+function directive( text, key, parent, doc, twigH ) {
+
+    // Do things with the data
+}
+twigH.registerDirective( 'name', directive );
+
+```
 
 ## Api usage
 

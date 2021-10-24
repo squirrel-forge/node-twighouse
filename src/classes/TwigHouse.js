@@ -80,7 +80,7 @@ class TwigHouse extends Core {
          * @property
          * @type {string}
          */
-        this.VERSION = '0.7.3';
+        this.VERSION = '0.7.4';
 
         /**
          * Reporting mode

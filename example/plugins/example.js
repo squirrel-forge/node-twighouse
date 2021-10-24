@@ -11,16 +11,25 @@ const exampleTemplate = require( '../plugin_methods/exampleTemplate' );
 const exampleTwig = require( '../plugin_methods/exampleTwig' );
 
 /**
- * TwigHouse Example Plugin Object
- *
+ * Plugin plain object
  * @type {TwigHousePluginObject}
  */
 module.exports = {
 
-    // Plugin requires a name for error tracking
+    /**
+     * Plugin name for reference and error tracking
+     * @public
+     * @property
+     * @type {string}
+     */
     __name : 'example',
 
-    // We can use the __methods property to define which methods should be used as plugin handlers
+    /**
+     * Define which plugin handlers to use
+     * @public
+     * @property
+     * @type {Array<string>}
+     */
     __methods : [ 'twig', 'doc', 'data', 'template', 'html' ],
 
     // Define our plugin methods
@@ -31,7 +40,8 @@ module.exports = {
     html : exampleHTML,
 
     /**
-     * Register module
+     * Register callback to add methods, directive and loaders
+     * @public
      * @param {TwigHouse} twigH - TwigHouse instance
      * @return {void}
      */
