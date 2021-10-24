@@ -157,7 +157,10 @@ module.exports = async function cli() {
     // Set target directory, as of where to write if required
     twigH.setConfig( { target } );
 
-    // TODO: set silent mode for plugins and fs
+    // Make sure the plugin and filesystem interfaces are up to date with silent mode
+    // Silent, verbose and strict after this point should not be changed via plugins.
+    twigH.plugins._silent = twigH._config.silent;
+    twigH.fs._silent = twigH._config.silent;
 
     // Load plugins
     //  - Loads plugins from the plugins directory
