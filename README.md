@@ -113,7 +113,7 @@ All of these can be set via the *.twighouse* config file options.
   "__template": "{.../}template"
 }
 ```
- - The *document* property gets defined before json processing and is set afterwards and may be modified via the [modify_data](#modify-data) plugin method. Note that the document data object is supplied to any [directives](#directives) running during processing.
+ - The *document* property gets defined before json processing and is set afterwards and may be modified via the [plugin data](#plugin-data) plugin method. Note that the document data object is supplied to any [directives](#directives) running during processing.
 ```
 {
   path: {string} The page reference, includes a full relativ path and the page slug
@@ -150,7 +150,7 @@ A list of builtin directives an how they can be used.
 
 ## Templates
 
-The templates structure is all yours, following the default loading pattern, which can be modified via the [modify_template](#modify-template) method with a [plugin](#plugins) to load whatever you like.
+The templates structure is all yours, following the default loading pattern, which can be modified via the [plugin template](#plugin-template) method with a [plugin](#plugins) to load whatever you like.
 
 Following the example structure:
 ```
@@ -167,7 +167,6 @@ Following the example structure:
       +-- [components]
       |    |
       |    |-- nav.twig
-      |    |-- raw.twig
       |    `-- section.twig
       |
       +-- [partials]
