@@ -157,11 +157,6 @@ module.exports = async function cli() {
     // Set target directory, as of where to write if required
     twigH.setConfig( { target } );
 
-    // Make sure the plugin and filesystem interfaces are up to date with silent mode
-    // Silent, verbose and strict after this point should not be changed via plugins.
-    twigH.plugins._silent = twigH._config.silent;
-    twigH.fs._silent = twigH._config.silent;
-
     // Load plugins
     //  - Loads plugins from the plugins directory
     //  - And from the config option TwigHouseConfig.usePlugins
@@ -176,6 +171,11 @@ module.exports = async function cli() {
         }
         cfx.success( 'TwigHouse loaded ' + plugins + ' plugin' + ( plugins === 1 ? '' : 's' ) );
     }
+
+    // Make sure the plugin and filesystem interfaces are up to date with silent mode
+    // Silent, verbose and strict after this point should not be changed via plugins.
+    twigH.plugins._silent = twigH._config.silent;
+    twigH.fs._silent = twigH._config.silent;
 
     // Load source data
     //  - Overrides source path data if set as option
