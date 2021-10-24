@@ -336,7 +336,7 @@ class TwigHouse extends Core {
 
     /**
      * Get path from config
-     * @param {string} name - Option name
+     * @param {('root'|'data'|'fragments'|'plugins'|'templates'|'target')} name - Option name
      * @param {boolean} absolute - Set true to return an absolute path
      * @return {string|null} - Path or null if option name was invalid
      */
@@ -688,7 +688,7 @@ class TwigHouse extends Core {
      * @return {Promise<number>} - Number of documents written
      */
     async writeDocuments( target = null, type = 'html' ) {
-        target = target || this._config.target;
+        target = target || this.getPath( 'target' );
 
         // Select page json or compiled html as data source
         const data = type === 'json' ? this._data : this._rendered;
