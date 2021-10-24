@@ -230,7 +230,7 @@ class Plugins extends Core {
      * @public
      * @param {string} name - Method name
      * @param {Function} fn - Plugin function
-     * @return {void}
+     * @return {boolean} - True if registered successfully
      */
     method( name, fn ) {
 
@@ -238,11 +238,13 @@ class Plugins extends Core {
 
             // Must be a callable function
             this._error( 'Method "' + name + '" must be a callable function' );
+            return false;
 
         } else if ( this._a.length && !this._a.includes( name ) ) {
 
             // Method names are limited if defined during construction
             this._error( 'Cannot set unknown plugin method: ' + name );
+            return false;
 
         } else {
 
@@ -252,6 +254,7 @@ class Plugins extends Core {
             }
             this._m[ name ].push( fn );
         }
+        return true;
     }
 
     /**
@@ -270,26 +273,28 @@ class Plugins extends Core {
      * @public
      * @param {string} name - Method name
      * @param {Array} args - Optional arguments
-     * @return {Promise<boolean>} - True if at least one method was run
+     * @return {Promise<number>} - Larger than 0 if at least one method was run
      */
     async run( name, args = [] ) {
         const methods = this._m[ name ];
 
         // Skip with nothing to call
         if ( !methods || !methods.length ) {
-            return false;
+            return 0;
         }
 
         // Attempt to run methods
+        let stats = 0;
         for ( let i = 0; i < methods.length; i++ ) {
             try {
                 await methods[ i ]( ...args );
+                stats++;
             } catch ( e ) {
                 this._log( e );
                 this._error( 'Failed to run: ' + methods[ i ].name + '@' + name );
             }
         }
-        return true;
+        return stats;
     }
 }
 module.exports = Plugins;

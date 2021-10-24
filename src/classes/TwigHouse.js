@@ -46,6 +46,19 @@ const isPojo = require( '../fn/isPojo' );
  */
 
 /**
+ * @typedef {Function} TwigHousePluginRegister
+ * @param {TwigHouse} twigH - TwigHouse instance
+ * @return {void}
+ */
+
+/**
+ * @typedef {Object} TwigHousePluginObject
+ * @property {string} __name - Plugin name
+ * @property {Array<string>} __methods - Plugin method names to auto assign
+ * @property {Function|TwigHousePluginRegister} __register - Method called to allow registering of methods
+ */
+
+/**
  * TwigHouse class
  * @class
  * @type {TwigHouse}
@@ -213,6 +226,22 @@ class TwigHouse extends Core {
          * @type {{name:{}}}
          */
         this._rendered = {};
+
+        /**
+         * Directive stats
+         * @public
+         * @property
+         * @type {{name:number}}
+         */
+        this.directiveStats = {};
+
+        /**
+         * Builtin directives dictionary
+         * @protected
+         * @property
+         * @type {Array<string>}
+         */
+        this._directivesInUse = [];
     }
 
     /**
@@ -361,6 +390,55 @@ class TwigHouse extends Core {
             }
         } else if ( this._config.verbose ) {
             this._info( 'Could define a config at: ' + config_path );
+        }
+    }
+
+    /**
+     * Enable an internal directive
+     * @param {string} name - Directive name
+     * @return {void}
+     */
+    useDirective( name ) {
+        const directive_path = path.resolve( path.join( this.installDirectory, 'src', 'directives', name + '.js' ) );
+        let directive;
+        try {
+            directive = require( directive_path );
+        } catch ( e ) {
+            this._log( e );
+            this._error( 'Unknown native directive: ' + name );
+            return null;
+        }
+        if ( typeof directive !== 'function' ) {
+            this._error( 'Directive must be a function: ' + name );
+            return;
+        }
+        if ( this._directivesInUse.includes( name ) ) {
+            this._warn( 'Directive already in use: ' + name );
+            return;
+        }
+        this._directivesInUse.push( name );
+        if ( this._config.verbose ) {
+            this._info( 'Using directive: ' + name );
+        }
+        this.registerDirective( name, directive );
+    }
+
+    /**
+     * Register a directive
+     * @public
+     * @param {string} name - Directive name
+     * @param {string} fn - Directive function
+     * @return {void}
+     */
+    registerDirective( name, fn ) {
+        if ( !this.plugins ) {
+            this._error( 'Plugins not defined, too early to register directives' );
+            return;
+        }
+        if ( this.plugins.method( this._config.directivePrefix + name, fn ) ) {
+            if ( this._config.verbose ) {
+                this._info( 'Registered directive: ' + name );
+            }
         }
     }
 
@@ -660,7 +738,13 @@ class TwigHouse extends Core {
                 }
 
                 // Run directive methods
-                await this.plugins.run( method, [ compiled[ key ], key, compiled, doc, this, ...args ] );
+                const stats = await this.plugins.run( method, [ compiled[ key ], key, compiled, doc, this, ...args ] );
+                if ( !this.directiveStats[ name ] ) {
+                    this.directiveStats[ name ] = 0;
+                }
+                if ( stats ) {
+                    this.directiveStats[ name ] += stats;
+                }
             }
         }
     }
