@@ -236,6 +236,7 @@ These can be set via the *.twighouse* json config or with the api from a plugin 
  target             | str    | 'dist'         | Target directory, *note that when using the cli tool target default is:* **''**
  resolveFragments   | bool   | true           | Resolve fragments
  fragmentProperty   | str    | '__fragment'   | Fragment property name to load from
+ useDirectives      | Array  | []             | Builtin directives to use, can be set to 'all':string to use all builtins
  processDirectives  | bool   | true           | Process directives while parsing json 
  ignoreDirectives   | bool   | true           | Ignore directives that are not defined
  directivesProperty | str    | '__directives' | Directives property name to execute from

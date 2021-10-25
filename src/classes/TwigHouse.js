@@ -23,6 +23,7 @@ const isPojo = require( '../fn/isPojo' );
  * @property {string} target - Target directory, default: 'dist'
  * @property {boolean} resolveFragments - Resolve fragments, default: true
  * @property {string} fragmentProperty - Fragment property name to load from, default: '__fragment'
+ * @property {'all'|Array<string>} useDirectives - Builtin directives to use, none by default: []
  * @property {boolean} processDirectives - Process directives while parsing json, default: true
  * @property {boolean} ignoreDirectives - Ignore directives that are not defined, default: true
  * @property {string} directivesProperty - Directives property name to execute from, default: '__directives'
@@ -30,7 +31,7 @@ const isPojo = require( '../fn/isPojo' );
  * @property {string} defaultTemplate - Default template, default: '__page'
  * @property {string} templateExt - Template file extension, default: '.twig'
  * @property {string} templateProperty - Template property, default: '__template'
- * @property {Array} usePlugins - Plugin module names or paths to load, default: []
+ * @property {Array<string>} usePlugins - Plugin module names or paths to load, none by default: []
  * @property {string} pluginExt - Plugin file extension, default: js
  * @property {boolean} minify - Minify document output
  * @property {string} minifyProperty - Minify options property on page to use, default: '__minify'
@@ -134,6 +135,9 @@ class TwigHouse extends Core {
             /** Fragment property name to load from */
             fragmentProperty : '__fragment',
 
+            /** Builtin directives to use */
+            useDirectives : [],
+
             /** Process directives while parsing json */
             processDirectives : true,
 
@@ -236,12 +240,20 @@ class TwigHouse extends Core {
         this.directiveStats = {};
 
         /**
-         * Builtin directives dictionary
+         * Builtin directives in use
          * @protected
          * @property
          * @type {Array<string>}
          */
         this._directivesInUse = [];
+
+        /**
+         * Builtin directives names
+         * @protected
+         * @property
+         * @type {string[]}
+         */
+        this._builtinDirectives = [ 'navItemActive' ];
     }
 
     /**
@@ -429,6 +441,23 @@ class TwigHouse extends Core {
     }
 
     /**
+     * Register builtin directives according to config
+     * @public
+     * @return {void}
+     */
+    registerBuiltinDirectives() {
+        let from = this._config.useDirectives;
+        if ( this._config.useDirectives === 'all' ) {
+
+            // Use all defined builtins
+            from = this._builtinDirectives;
+        }
+        for ( let i = 0; i < from.length; i++ ) {
+            this.useDirective( from[ i ] );
+        }
+    }
+
+    /**
      * Register a directive
      * @public
      * @param {string} name - Directive name
@@ -526,8 +555,15 @@ class TwigHouse extends Core {
     async loadPlugins( plugin_paths = [] ) {
         const load_plugins = [ ...this._config.usePlugins, ...plugin_paths ];
 
-        // Init plugins and load plugins
+        // Init plugins
         this.plugins = new Plugins( [], [], this, this._config.silent, this._mode );
+
+        // Use builtin directives before loading plugins
+        // this ensures there are no collisions of internals,
+        // but any plugin that attempts to register a taken name will show an error
+        this.registerBuiltinDirectives();
+
+        // Load plugins
         this.plugins.load( load_plugins );
 
         // Run twig modify and allow plugins to modify config
