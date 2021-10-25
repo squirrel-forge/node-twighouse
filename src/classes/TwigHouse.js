@@ -370,7 +370,9 @@ class TwigHouse extends Core {
         this.fs = new FsInterface( this._config.silent, this._mode );
 
         // Load config from cwd
-        await this._loadConfig();
+        if ( this._config.__configname ) {
+            await this._loadConfig();
+        }
     }
 
     /**
@@ -382,6 +384,9 @@ class TwigHouse extends Core {
         const config_path = path.resolve( path.join( this._config.root, this._config.__configname ) );
         const config_exists = await this.fs.exists( config_path );
         if ( config_exists ) {
+            if ( this._config.verbose ) {
+                this._info( 'Reading config from: ' + config_path );
+            }
             const config = await this.fs.readJSON( config_path );
             if ( !config ) {
                 this._error( 'Failed to load config from: ' + config_path );
