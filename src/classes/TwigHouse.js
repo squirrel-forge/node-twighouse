@@ -381,7 +381,7 @@ class TwigHouse extends Core {
      * @return {Promise<void>} - Loads and assigns config if available
      */
     async _loadConfig() {
-        const config_path = path.resolve( path.join( this._config.root, this._config.__configname ) );
+        const config_path = path.resolve( path.join( isUrl( this._config.root ) ? '' : this._config.root, this._config.__configname ) );
         const config_exists = await this.fs.exists( config_path );
         if ( config_exists ) {
             if ( this._config.verbose ) {

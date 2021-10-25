@@ -68,6 +68,13 @@ You can use urls in certain parts of the application, this example will render u
 twighouse example dist -c=https://raw.githubusercontent.com/squirrel-forge/node-twighouse/main/example/data/index.json -d=https://raw.githubusercontent.com/squirrel-forge/node-twighouse/main/example/data -f=https://raw.githubusercontent.com/squirrel-forge/node-twighouse/main/example/fragments -m
 ```
 
+If you wish to use the source argument as an url base you must set the target argument, the template and the plugins option with an absolute path, the *.twighouse* config will be loaded from the current working directory.
+
+```
+twighouse https://raw.githubusercontent.com/squirrel-forge/node-twighouse/main/example /{...}/dist -p=/{...}/example/plugins -t=/{...}/example/templates -c=data/index.json -m
+
+```
+
 ## JSON input
 
 The individual pages json is loaded from the *{source}/data/* directory, this directory is read recursivly by default.

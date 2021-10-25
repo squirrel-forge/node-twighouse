@@ -177,6 +177,17 @@ module.exports = async function cli() {
     twigH.plugins._silent = twigH._config.silent;
     twigH.fs._silent = twigH._config.silent;
 
+    // If our root is set to an url we want to allow
+    // for -c / --data-source option to be partial urls to reduce command length
+    if ( isUrl( twigH._config.root ) ) {
+        for ( let i = 0; i < options.data.length; i++ ) {
+            const value = options.data[ i ];
+            if ( !isUrl( value ) && value[ 0 ] !== path.sep ) {
+                options.data[ i ] = path.join( twigH._config.root, value );
+            }
+        }
+    }
+
     // Load source data
     //  - Overrides source path data if set as option
     const loaded = await twigH.load( options.limit, options.data.length ? options.data : null );
