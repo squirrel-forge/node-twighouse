@@ -46,18 +46,18 @@ the source argument is omitted and assumed to be the current working directory
 
  Short | Long          | Type      | Description
 ------ | ------------- | --------- | ---
-  -v   | --version     | bool      | Show the application version
+  -o   | --output-json | bool/save | Show/save compiled pages json only
+  -m   | --minify      | bool      | Minifies the html output
+  -l   | --limit       | str, ...  | Limit which page or pages should be compiled
   -d   | --data        | path      | Overrides the data folder
   -f   | --fragments   | path      | Overrides the fragments folder
   -t   | --templates   | path      | Overrides the templates folder
   -p   | --plugins     | path      | Overrides the plugins folder
   -c   | --data-source | str, ...  | Defines a list of data sources to load
-  -l   | --limit       | str, ...  | Limit which page or pages should be compiled
-  -m   | --minify      | bool      | Minifies the html output
-  -o   | --output-json | bool/save | Show/save compiled pages json only
   -i   | --verbose     | bool      | Show additional info
   -s   | --strict      | bool      | Run in strict mode
   -q   | --silent      | bool      | Run in silent mode, will throw errors, but show no other output
+  -v   | --version     | bool      | Show the application version
   -x   | --example     | bool      | Deploy example data and templates, accepts only one, the target, argument
 
 #### Using url data
@@ -113,7 +113,7 @@ All of these can be set via the *.twighouse* config file options.
   "__template": "{.../}template"
 }
 ```
- - The *document* property gets defined before json processing and is set afterwards and may be modified via the [plugin data](#plugin-data) plugin method. Note that the document data object is supplied to any [directives](#directives) running during processing.
+ - The *document* property gets defined before json processing and is set afterwards and may be modified via the [plugin data](#plugin-data) method. Note that the document data object is supplied to any [directives](#directives) running during processing.
 ```
 {
   path: {string} The page reference, includes a full relativ path and the page slug
@@ -213,6 +213,8 @@ Possible page templates when using defaults, for page reference *{.../}index* wi
 A project directory can make use of a *.twighouse* json config file to reduce the need to set options when compiling and also set options that cannot be set via the cli application arguments, options and flags.
 
 ### Configuration options
+
+These can be set via the *.twighouse* json config or with the api from a plugin or your own application.
 
  Name               | Type   | Default        | Description
 --------------------|--------|----------------|---
