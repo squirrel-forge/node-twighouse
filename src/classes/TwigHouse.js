@@ -5,6 +5,7 @@ const path = require( 'path' );
 const Twig = require( 'twig' );
 const minify = require( 'html-minifier' ).minify;
 const Core = require( './Core' );
+const TwigHouseDocument = require( './TwigHouseDocument' );
 const FsInterface = require( './FsInterface' );
 const Plugins = require( './Plugins' );
 const isUrl = require( '../fn/isUrl' );
@@ -33,17 +34,13 @@ const isPojo = require( '../fn/isPojo' );
  * @property {string} templateProperty - Template property, default: '__template'
  * @property {Array<string>} usePlugins - Plugin module names or paths to load, none by default: []
  * @property {string} pluginExt - Plugin file extension, default: js
+ * @property {string} docDomain - Document domain used for url, default: ''
+ * @property {string} docRoot - Document root used for uri and url, default: '/'
+ * @property {string} docOmitIndex - For index files do not include the filename for uri and url, default: true
+ * @property {string} docExt - Document extension used for uri and url, default: '.html'
  * @property {boolean} minify - Minify document output
  * @property {string} minifyProperty - Minify options property on page to use, default: '__minify'
  * @property {Object} minifyOptions - Minify plugin options
- */
-
-/**
- * @typedef {Object} TwigHouseDocument
- * @property {string} path - Document path relative to root
- * @property {string} dir - Directory relative to root
- * @property {string} slug - Document name
- * @property {string} uri - Document uri
  */
 
 /**
@@ -162,10 +159,19 @@ class TwigHouse extends Core {
             /** Use plugins, plugin paths to load */
             usePlugins : [],
 
-            /** Plugin file extension to use */
+            /** Plugin file extension to use for fs loading */
             pluginExt : 'js',
 
-            /** Document extension */
+            /** Document domain used for url */
+            docDomain : '',
+
+            /** Document root used for uri and url */
+            docRoot : '/',
+
+            /** For index files do not include the filename for uri and url */
+            docOmitIndex : true,
+
+            /** Document extension used for uri and url */
             docExt : '.html',
 
             /** Minify document output */
@@ -206,6 +212,14 @@ class TwigHouse extends Core {
          * @type {Plugins}
          */
         this.plugins = null;
+
+        /**
+         * Page document objects
+         * @protected
+         * @property
+         * @type {{name:{}}}
+         */
+        this._docs = {};
 
         /**
          * Loaded pages data
@@ -253,7 +267,7 @@ class TwigHouse extends Core {
          * @property
          * @type {string[]}
          */
-        this._builtinDirectives = [ 'navItemActive' ];
+        this._builtinDirectives = [ 'setFromDoc', 'navItemActive' ];
     }
 
     /**
@@ -443,11 +457,12 @@ class TwigHouse extends Core {
     /**
      * Register builtin directives according to config
      * @public
+     * @param {Array<string>|'all'} from - Directive list to load
      * @return {void}
      */
-    registerBuiltinDirectives() {
-        let from = this._config.useDirectives;
-        if ( this._config.useDirectives === 'all' ) {
+    registerBuiltinDirectives( from = null ) {
+        from = from || this._config.useDirectives;
+        if ( from === 'all' ) {
 
             // Use all defined builtins
             from = this._builtinDirectives;
@@ -474,6 +489,24 @@ class TwigHouse extends Core {
                 this._info( 'Registered directive: ' + name );
             }
         }
+    }
+
+    /**
+     * Get document for reference
+     * @param {string} ref - Page reference
+     * @return {null|Object} - Page data
+     */
+    getDoc( ref ) {
+        return this._docs[ ref ] || null;
+    }
+
+    /**
+     * Get data for reference
+     * @param {string} ref - Page reference
+     * @return {null|Object} - Page data
+     */
+    getData( ref ) {
+        return this._data[ ref ] || null;
     }
 
     /**
@@ -575,24 +608,42 @@ class TwigHouse extends Core {
     }
 
     /**
+     * Prepare document objects
+     * @param {Array<string>} collection - Paths/reference collection
+     * @return {Promise<Array<string>>} - References matching the collection
+     */
+    async prepareDocuments( collection ) {
+        const references = [];
+        for ( let i = 0; i < collection.length; i++ ) {
+            const twHdoc = new TwigHouseDocument( collection[ i ], this );
+            this._docs[ twHdoc.ref ] = twHdoc;
+            references.push( twHdoc.ref );
+
+            // Run plugins data method
+            await this.plugins.run( 'doc', [ twHdoc.ref, twHdoc, this ] );
+        }
+        return references;
+    }
+
+    /**
      * Load pages data
      * @param {Array<string>} collection - Paths/reference collection
      * @param {Array<string>} limit_index - Limit the collection elements
      * @return {Promise<void>} - Possibly throws errors in strict mode
      */
     async collectPagesData( collection, limit_index = [] ) {
+        const refs = await this.prepareDocuments( collection );
         for ( let i = 0; i < collection.length; i++ ) {
             let page_data = [ collection[ i ], {} ];
-            const args = [ collection[ i ], limit_index, page_data, this ];
             if ( this.plugins.has( 'loader' ) ) {
 
                 // Run all loaders and let them modify the page_data object
-                await this.plugins.run( 'loader', args );
+                await this.plugins.run( 'loader', [ collection[ i ], limit_index, page_data, refs[ i ], this ] );
 
             } else {
 
                 // By default we can load from the local or a remote filesystem
-                page_data = await this.buildPageData( ...args );
+                page_data = await this.buildPageData( collection[ i ], limit_index, this._docs[ refs[ i ] ] );
             }
 
             // Ensure page data content
@@ -616,30 +667,22 @@ class TwigHouse extends Core {
      * Build page data
      * @param {string} file - File path
      * @param {Array<string>} limit_index - Limit the collection by reference
+     * @param {TwigHouseDocument} doc - Document object
      * @return {Promise<(string|*)[]|null>} - Null on skip or array with reference and json data
      */
-    async buildPageData( file, limit_index ) {
-        const { name, dir } = path.parse( file );
-        const rel_dir = this.fs.relPath( dir, this.getPath( 'data', dir[ 0 ] === path.sep ) );
-        const ref = path.join( rel_dir, name );
+    async buildPageData( file, limit_index, doc ) {
 
         // Skip if the reference is not within our limit_index
-        if ( limit_index.length && !limit_index.includes( ref ) ) {
+        if ( limit_index.length && !limit_index.includes( doc.ref ) ) {
             return null;
         }
-
-        // Create document global data
-        const doc = this.makeDocument( ref, rel_dir, name );
-
-        // Run plugins data method
-        await this.plugins.run( 'doc', [ ref, doc, this ] );
 
         // Load page json
         const json = await this.getPageJson( file, doc );
 
         // Empty json data
         if ( json instanceof Array && !json.length || !Object.keys( json ).length ) {
-            this._error( 'Page contains no data: ' + ref );
+            this._error( 'Page contains no data: ' + doc.ref );
             return null;
         }
 
@@ -647,37 +690,10 @@ class TwigHouse extends Core {
         json.document = doc;
 
         // Run plugins data method
-        await this.plugins.run( 'data', [ ref, json, this ] );
+        await this.plugins.run( 'data', [ doc.ref, json, this ] );
 
         // Return reference and data
-        return [ ref, json ];
-    }
-
-    /**
-     * Make page document object
-     * @public
-     * @param {string} ref - Page reference
-     * @param {string} rel_dir - Page relative path
-     * @param {string} name - Page name
-     * @return {TwigHouseDocument} - TwigHouseDocument object
-     */
-    makeDocument( ref, rel_dir, name ) {
-        return {
-            path : ref,
-            dir : rel_dir,
-            slug : name,
-            uri : this._getDocumentUri( rel_dir, name ),
-        };
-    }
-
-    /**
-     * Get document uri
-     * @param {string} rel_dir - Relative directory/path
-     * @param {string} name - Page name
-     * @return {string} - Document uri
-     */
-    _getDocumentUri( rel_dir, name ) {
-        return ( rel_dir.length ? rel_dir + path.sep : '' ) + name + this._config.docExt;
+        return [ doc.ref, json ];
     }
 
     /**
@@ -845,16 +861,7 @@ class TwigHouse extends Core {
      * @return {boolean} - True if TwigHouseDocument is available
      */
     documentAvailable( data ) {
-        if ( data && typeof data.document === 'object' ) {
-            const check_str = [ 'path', 'dir', 'slug', 'uri' ];
-            for ( let i = 0; i < check_str.length; i++ ) {
-                if ( typeof data.document[ check_str[ i ] ] !== 'string' ) {
-                    return false;
-                }
-            }
-            return true;
-        }
-        return false;
+        return data && data.document instanceof TwigHouseDocument;
     }
 
     /**
@@ -946,7 +953,7 @@ class TwigHouse extends Core {
         }
 
         // Template reference from document path
-        paths.push( path.join( tmpl_path, data.document.path ) );
+        paths.push( path.join( tmpl_path, data.document.dir ) );
 
         // Template from default template option
         paths.push( path.join( tmpl_path, this._config.defaultTemplate ) );

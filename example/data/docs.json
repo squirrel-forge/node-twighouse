@@ -1,5 +1,4 @@
 {
-  "__template": "foo",
   "meta": {
     "__fragment": "meta",
     "title": "Docs - @squirrel-forge/twighouse"

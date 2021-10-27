@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.7.8
+ - Added document object and setFromDoc directive performed some cleanups
+
 ## 0.7.2
  - Minor features, fixes and documentation update.
 

@@ -11,6 +11,12 @@ const exampleTemplate = require( '../plugin_methods/exampleTemplate' );
 const exampleTwig = require( '../plugin_methods/exampleTwig' );
 
 /**
+ * Register the example loader
+ * @type {boolean}
+ */
+const ADD_EXAMPLE_LOADER = false;
+
+/**
  * Plugin plain object
  * @type {TwigHousePluginObject}
  */
@@ -49,12 +55,15 @@ module.exports = {
 
         // Set loader to use the example loader, this is still experimental and the way loaders work will change
         // Remove the condition to enable the custom loader
-        if ( twigH.__add_example_loader === true ) {
+        if ( ADD_EXAMPLE_LOADER === true ) {
             twigH.plugins.method( 'loader', exampleLoader );
         }
 
         // Enable a builtin directive
-        twigH.useDirective( 'navItemActive' );
+        // twigH.useDirective( 'navItemActive' );
+
+        // Or use all directives
+        twigH.registerBuiltinDirectives( 'all' );
 
         // Add some custom directives
         twigH.registerDirective( 'loadFromTwigHouse', exampleDirectiveAsync );
