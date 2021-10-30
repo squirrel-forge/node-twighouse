@@ -14,8 +14,8 @@ const isPojo = require( '../fn/isPojo' );
 /**
  * @typedef {Object} TwigHouseConfig
  * @property {boolean} verbose - Run in verbose mode, default: false
- * @property {boolean} strict - Run in strict mode, default: false
- * @property {boolean} silent - Silent mode will prevent any output and should be used with strict = true
+ * @property {boolean} strict - Run in strict mode, default: true
+ * @property {boolean} silent - Silent mode will prevent any output and should be used with strict = true, default: false
  * @property {string} root - Source directory, default: '',
  * @property {string} data - Data directory, default: 'data'
  * @property {string} fragments : Fragments directory, default: 'fragments'
