@@ -21,6 +21,6 @@ module.exports = function exampleDirectiveSync( text, key, parent, doc, twigH ) 
     parent[ key ] = converter.makeHtml( text );
     if ( twigH._config.verbose ) {
         const current_count = twigH.directiveStats[ 'showdownConvert' ] || 0;
-        twigH._info( 'ExamplePlugin Directive [showdownConvert] >>> Total calls: ' + current_count );
+        twigH.info( 'ExamplePlugin Directive [showdownConvert] >>> Total calls: ' + current_count );
     }
 };

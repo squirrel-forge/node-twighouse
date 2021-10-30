@@ -17,6 +17,6 @@ module.exports = async function exampleDirectiveAsync( target, key, parent, doc,
     parent[ key ] = await twigH.fs.readText( text_path );
     if ( twigH._config.verbose ) {
         const current_count = twigH.directiveStats[ 'loadFromTwigHouse' ] || 0;
-        twigH._info( 'ExamplePlugin Directive [loadFromTwigHouse] >>> Total calls: ' + current_count );
+        twigH.info( 'ExamplePlugin Directive [loadFromTwigHouse] >>> Total calls: ' + current_count );
     }
 };

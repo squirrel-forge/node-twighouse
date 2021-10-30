@@ -2,33 +2,39 @@
  * Requires
  */
 const path = require( 'path' );
-const Core = require( './Core' );
+const Exception = require( './Exception' );
 const isPojo = require( '../fn/isPojo' );
+
+/**
+ * Plugin exception
+ * @class
+ */
+class PluginsException extends Exception {}
 
 /**
  * Plugins handler
  * @class
  * @type {Plugins}
  */
-class Plugins extends Core {
+class Plugins {
 
     /**
      * Constructor
      * @constructor
+     * @param {null|Object} context - Context object parsed to register
+     * @param {boolean} strict - Strict mode will always throw exceptions
      * @param {Array<string>} allowed - Allowed method names
      * @param {Array<string>} paths - Any number of plugin paths to load
-     * @param {null|Object} context - Context object parsed to register
-     * @param {boolean} silent - Set true to enable silent mode
-     * @param {null|console} cfx - Console or alike object
      */
-    constructor(
-        allowed = [],
-        paths = [],
-        context = null,
-        silent = false,
-        cfx = null
-    ) {
-        super( silent, cfx );
+    constructor( context = null, strict = true, allowed = [], paths = [] ) {
+
+        /**
+         * Strict mode
+         * @public
+         * @property
+         * @type {boolean}
+         */
+        this.strict = strict;
 
         /**
          * Context
@@ -50,7 +56,7 @@ class Plugins extends Core {
          * Registered methods
          * @protected
          * @property
-         * @type {{name: [<Function>]}}
+         * @type {{name: ((function())|*)[]}}
          */
         this._m = {};
 
@@ -83,11 +89,14 @@ class Plugins extends Core {
      * @param {string} name - Plugin name
      * @param {Object} plugin - Plugin object or instance
      * @param {boolean} was_constructor - True if the plugin was constructed via class/function
+     * @throws {PluginsException}
      * @return {void}
      */
     register( name, plugin, was_constructor ) {
         if ( this._p[ name ] ) {
-            this._error( 'Plugin name "' + name + '" already loaded' );
+            if ( this.strict ) {
+                throw new PluginsException( 'Plugin name "' + name + '" already loaded' );
+            }
             return;
         }
         this._p[ name ] = plugin;
@@ -122,7 +131,9 @@ class Plugins extends Core {
         // We did not load anything, lets remove the plugin and shout
         if ( !loaded_something ) {
             delete this._p[ name ];
-            this._warn( 'Removed plugin "' + name + '" that assigned no methods' );
+            if ( this.strict ) {
+                throw new PluginsException( 'Removed plugin "' + name + '" that assigned no methods' );
+            }
         }
     }
 
@@ -140,9 +151,19 @@ class Plugins extends Core {
     }
 
     /**
+     * Get plugin object
+     * @param {string} name - Plugin name
+     * @return {null|Object} - Plugin object
+     */
+    get( name ) {
+        return this._p[ name ] || null;
+    }
+
+    /**
      * Load plugins
      * @public
      * @param {Array<string>} paths - Array of paths
+     * @throws {PluginsException}
      * @return {void}
      */
     load( paths = [] ) {
@@ -173,8 +194,9 @@ class Plugins extends Core {
                         this.hints.push( 'Loaded plugin from path: ' + plugin_path );
                     }
                 } catch ( e ) {
-                    this._log( e );
-                    this._error( 'Failed to load plugin from: ' + src_path + ' or ' + plugin_path );
+                    if ( this.strict ) {
+                        throw new PluginsException( 'Failed to load plugin from: ' + src_path + ' or ' + plugin_path, e );
+                    }
                     continue;
                 }
             }
@@ -186,14 +208,19 @@ class Plugins extends Core {
 
             // Error and continue to next index
             if ( !is_function && !is_object ) {
-                this._error( 'Invalid plugin type at: ' + plugin_path );
+                if ( this.strict ) {
+                    throw new PluginsException( 'Invalid plugin type at: ' + plugin_path );
+                }
                 continue;
             }
 
             // A plain object with a set of methods and a __name property
             const is_pojo = is_object && isPojo( Plugin );
             if ( is_pojo && typeof Plugin.__name !== 'string' || !Plugin.__name.length ) {
-                this._error( 'Plugin plain object requires a __name property with a non empty string to identify at: ' + plugin_path );
+                if ( this.strict ) {
+                    throw new PluginsException( 'Plugin plain object requires a __name property'
+                        + ' with a non empty string to identify at: ' + plugin_path );
+                }
                 continue;
             }
 
@@ -219,8 +246,8 @@ class Plugins extends Core {
             // Register
             if ( name && obj ) {
                 this.register( name, obj, is_function );
-            } else {
-                this._error( 'Failed to load plugin at: ' + plugin_path );
+            } else if ( this.strict ) {
+                throw new PluginsException( 'Failed to load plugin at: ' + plugin_path );
             }
         }
     }
@@ -230,6 +257,7 @@ class Plugins extends Core {
      * @public
      * @param {string} name - Method name
      * @param {Function} fn - Plugin function
+     * @throws PluginsException
      * @return {boolean} - True if registered successfully
      */
     method( name, fn ) {
@@ -237,14 +265,12 @@ class Plugins extends Core {
         if ( typeof fn !== 'function' ) {
 
             // Must be a callable function
-            this._error( 'Method "' + name + '" must be a callable function' );
-            return false;
+            throw new PluginsException( 'Method "' + name + '" must be a callable function' );
 
         } else if ( this._a.length && !this._a.includes( name ) ) {
 
             // Method names are limited if defined during construction
-            this._error( 'Cannot set unknown plugin method: ' + name );
-            return false;
+            throw new PluginsException( 'Cannot set unknown plugin method: ' + name );
 
         } else {
 
@@ -273,9 +299,11 @@ class Plugins extends Core {
      * @public
      * @param {string} name - Method name
      * @param {Array} args - Optional arguments
+     * @param {boolean} silent - Ignore exceptions
+     * @throws PluginsException
      * @return {Promise<number>} - Larger than 0 if at least one method was run
      */
-    async run( name, args = [] ) {
+    async run( name, args = [], silent = false ) {
         const methods = this._m[ name ];
 
         // Skip with nothing to call
@@ -290,11 +318,15 @@ class Plugins extends Core {
                 await methods[ i ]( ...args );
                 stats++;
             } catch ( e ) {
-                this._log( e );
-                this._error( 'Failed to run: ' + methods[ i ].name + '@' + name );
+                if ( !silent ) {
+                    throw new PluginsException( 'Failed to run: ' + methods[ i ].name + '@' + name, e );
+                }
             }
         }
         return stats;
     }
 }
+
+// Export PluginsException as static property constructor
+Plugins.PluginsException = PluginsException;
 module.exports = Plugins;

@@ -8,7 +8,7 @@
 module.exports = function exampleHTML( ref, rendered, twigH ) {
     return new Promise( ( resolve ) => {
         if ( twigH._config.verbose ) {
-            twigH._info( 'ExamplePlugin [html] >>> ' + ref + '::' + rendered[ ref ].length + ' characters' );
+            twigH.info( 'ExamplePlugin [html] >>> ' + ref + '::' + rendered[ ref ].length + ' characters' );
         }
         resolve();
     } );

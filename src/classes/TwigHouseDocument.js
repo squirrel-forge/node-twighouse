@@ -2,6 +2,13 @@
  * Requires
  */
 const path = require( 'path' );
+const Exception = require( './Exception' );
+
+/**
+ * TwigHouse exception
+ * @class
+ */
+class TwigHouseDocumentException extends Exception {}
 
 /**
  * TwigHouse Document Object
@@ -14,8 +21,19 @@ class TwigHouseDocument {
      * @constructor
      * @param {string} reference - Reference string
      * @param {TwigHouse} twigH - TwigHouse instance
+     * @throws {TwigHouseDocumentException}
      */
     constructor( reference, twigH ) {
+
+        // Require reference
+        if ( typeof reference !== 'string' || !reference.length ) {
+            throw new TwigHouseDocumentException( 'Constructor argument reference must be a non empty string' );
+        }
+
+        // Require TwigHouse
+        if ( !twigH || typeof twigH !== 'object' ) {
+            throw new TwigHouseDocumentException( 'Constructor argument twigH must be a TwigHouse instance' );
+        }
 
         // Parse reference
         const { name, dir } = path.parse( reference );

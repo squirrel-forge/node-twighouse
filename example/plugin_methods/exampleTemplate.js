@@ -24,6 +24,6 @@ module.exports = function exampleTemplate( paths, templates, ref, data, twigH ) 
     // And add a new global template
     // paths.push( path.join( templates, '__global' ) );
     if ( twigH._config.verbose ) {
-        twigH._info( 'ExamplePlugin [template] >>> ' + ref + '::' + paths.length + ' paths' );
+        twigH.info( 'ExamplePlugin [template] >>> ' + ref + '::' + paths.length + ' paths' );
     }
 };

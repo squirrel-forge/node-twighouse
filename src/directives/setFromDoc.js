@@ -8,9 +8,12 @@
 function getFromReference( ref, type, twigH ) {
     const doc = twigH.getDoc( ref );
     if ( doc ) {
-        return doc[ type ] || null;
+        if ( typeof doc[ type ] !== 'undefined' ) {
+            return doc[ type ];
+        }
+        throw Error( 'Property "' + type + '" does not exist on document: ' + ref );
     } else {
-        throw Error( 'Could not fetch ' + type + ' from reference: ' + ref );
+        throw Error( 'Could not fetch "' + type + '" on document not found: ' + ref );
     }
 }
 

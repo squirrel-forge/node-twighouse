@@ -87,7 +87,7 @@
 
     "array-bracket-newline": [ 2, "consistent" ],
     "array-bracket-spacing": [ 2, "always"],
-    "array-element-newline": [ 2, { "multiline": true, "minItems": 7 } ],
+    "array-element-newline": [ 2, { "multiline": true, "minItems": 10 } ],
     "block-spacing" : 2,
     "brace-style": [ 2, "1tbs", { "allowSingleLine": true } ],
     "comma-dangle": [ 2, { "arrays": "only-multiline", "objects": "only-multiline", "imports": "never", "exports": "never", "functions": "ignore" } ],

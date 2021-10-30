@@ -5,33 +5,29 @@ const path = require( 'path' );
 const fs = require( 'fs' );
 const fetch = require( 'node-fetch' );
 const dirTree = require( 'directory-tree' );
-const Core = require( './Core' );
+const Exception = require( './Exception' );
+
+/**
+ * FsInterface exception
+ * @class
+ */
+class FsInterfaceException extends Exception {}
 
 /**
  * File system interface
  * @class
  * @type {FsInterface}
  */
-class FsInterface extends Core {
-
-    /**
-     * Constructor
-     * @constructor
-     * @param {boolean} silent - Set true to enable silent mode
-     * @param {null|console} cfx - Console or alike object
-     */
-    constructor( silent = false, cfx = null ) {
-        super( silent, cfx );
-    }
+class FsInterface {
 
     /**
      * Read remote file as buffer
      * @public
      * @param {string} url - Url to file
+     * @throws {FsInterfaceException}
      * @return {Promise<Buffer|null>} - Buffer or null on error
      */
     remote( url ) {
-        const _self = this;
         return new Promise( ( resolve ) => {
 
             /**
@@ -44,13 +40,11 @@ class FsInterface extends Core {
                     const file_buffer = await res.buffer();
                     resolve( file_buffer );
                 } else {
-                    _self._warn( res.status + '#' + res.statusText + ' for: ' + url );
-                    resolve( null );
+                    throw new FsInterfaceException( res.status + '#' + res.statusText + ' for: ' + url );
                 }
             };
             fetch( url ).then( success ).catch( ( err ) => {
-                this._error( err );
-                resolve( null );
+                throw new FsInterfaceException( err );
             } );
         } );
     }
@@ -70,6 +64,7 @@ class FsInterface extends Core {
      * Read remote json file
      * @public
      * @param {string} url - Url to file
+     * @throws {FsInterfaceException}
      * @return {Promise<Array|Object|null>} - JSON data
      */
     async remoteJSON( url ) {
@@ -78,8 +73,7 @@ class FsInterface extends Core {
             try {
                 return JSON.parse( text );
             } catch ( e ) {
-                this._log( e );
-                this._warn( 'Failed to load JSON: ' + url );
+                throw new FsInterfaceException( 'Failed to load JSON: ' + url, e );
             }
         }
         return null;
@@ -90,14 +84,14 @@ class FsInterface extends Core {
      * @public
      * @param {string} file - Path to file
      * @param {string} enc - Charset
+     * @throws {FsInterfaceException}
      * @return {Promise<Buffer|null>} - Buffer or null on error
      */
     read( file, enc = 'utf8' ) {
         return new Promise( ( resolve ) => {
             fs.readFile( file, enc, ( err, content ) => {
                 if ( err ) {
-                    this._warn( err );
-                    resolve( null );
+                    throw new FsInterfaceException( err );
                 } else {
                     const buffer = Buffer.from( content );
                     resolve( buffer );
@@ -121,6 +115,7 @@ class FsInterface extends Core {
      * Read local json file
      * @public
      * @param {string} file - Path to file
+     * @throws {FsInterfaceException}
      * @return {Promise<Array|Object|null>} - JSON data
      */
     async readJSON( file ) {
@@ -129,8 +124,7 @@ class FsInterface extends Core {
             try {
                 return JSON.parse( text );
             } catch ( e ) {
-                this._log( e );
-                this._warn( 'Failed to load file: ' + file );
+                throw new FsInterfaceException( 'Failed to load file: ' + file, e );
             }
         }
         return null;
@@ -160,15 +154,14 @@ class FsInterface extends Core {
      * @public
      * @param {string} file - Filepath to write
      * @param {string} content - File content
+     * @throws {FsInterfaceException}
      * @return {Promise<boolean>} - True if the file was created
      */
     write( file, content ) {
         return new Promise( ( resolve ) => {
             fs.writeFile( file, content, ( err ) => {
                 if ( err ) {
-                    this._log( err );
-                    this._error( 'Failed to write file: ' + file );
-                    resolve( false );
+                    throw new FsInterfaceException( 'Failed to write file: ' + file, err );
                 } else {
                     resolve( true );
                 }
@@ -180,15 +173,14 @@ class FsInterface extends Core {
      * Write local dir
      * @public
      * @param {string} dir - Directory path
+     * @throws {FsInterfaceException}
      * @return {Promise<boolean>} - True if directory exists or was created
      */
     dir( dir ) {
         return new Promise( ( resolve ) => {
             fs.mkdir( dir, { recursive : true }, ( err ) => {
                 if ( err ) {
-                    this._log( err );
-                    this._error( 'Failed to create directory: ' + dir );
-                    resolve( false );
+                    throw new FsInterfaceException( 'Failed to create directory: ' + dir, err );
                 } else {
                     resolve( true );
                 }
@@ -259,4 +251,7 @@ class FsInterface extends Core {
         }
     }
 }
+
+// Export FsInterfaceException as static property constructor
+FsInterface.FsInterfaceException = FsInterfaceException;
 module.exports = FsInterface;

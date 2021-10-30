@@ -4,10 +4,10 @@
 const path = require( 'path' );
 const Twig = require( 'twig' );
 const minify = require( 'html-minifier' ).minify;
-const Core = require( './Core' );
 const TwigHouseDocument = require( './TwigHouseDocument' );
 const FsInterface = require( './FsInterface' );
 const Plugins = require( './Plugins' );
+const Exception = require( './Exception' );
 const isUrl = require( '../fn/isUrl' );
 const isPojo = require( '../fn/isPojo' );
 
@@ -57,20 +57,38 @@ const isPojo = require( '../fn/isPojo' );
  */
 
 /**
+ * TwigHouse exception
+ * @class
+ */
+class TwigHouseException extends Exception {}
+
+/**
+ * TwigHouse warning
+ * @class
+ */
+class TwigHouseWarning extends Exception {}
+
+/**
  * TwigHouse class
  * @class
  * @type {TwigHouse}
  */
-class TwigHouse extends Core {
+class TwigHouse {
 
     /**
      * Constructor
      * @constructor
-     * @param {boolean} silent - Set true to enable silent mode
      * @param {null|console} cfx - Console or alike object
      */
-    constructor( silent = false, cfx = null ) {
-        super( silent, cfx );
+    constructor( cfx = null ) {
+
+        /**
+         * Console alike reporting object
+         * @protected
+         * @property
+         * @type {console|null}
+         */
+        this._cfx = cfx;
 
         /**
          * Version
@@ -79,14 +97,6 @@ class TwigHouse extends Core {
          * @type {string}
          */
         this.VERSION = '0.7.4';
-
-        /**
-         * Reporting mode
-         * @protected
-         * @property
-         * @type {null|console}
-         */
-        this._mode = null;
 
         /**
          * Install location
@@ -271,72 +281,152 @@ class TwigHouse extends Core {
     }
 
     /**
-     * Report
+     * Parse exception for output
      * @protected
-     * @param {string} msg - Error message
-     * @param {('error'|'warn')} type - Type of reporting if cfx available
-     * @throws Error
+     * @param {string|Error|Exception} msg - Message or exception instance
+     * @param {boolean} noTrace - Do not output trace since it is internal
+     * @return {string} - Exception output
+     */
+    _exceptionAsOutput( msg, noTrace = false ) {
+
+        // We check if its an exception, all other errors will be sent to output unmodified
+        if ( msg instanceof Exception ) {
+            if ( this._config.verbose && !noTrace ) {
+
+                // In verbose we want to whole stack
+                return msg.stack;
+            } else {
+
+                // In normal mode we just send the short string representation without the stack
+                return msg + '';
+            }
+        }
+        return msg;
+    }
+
+    /**
+     * Error output
+     *  Throw in strict mode or always true
+     *  Notify in normal mode
+     *  Show full trace in verbose mode
+     * @public
+     * @param {string|Error|Exception} msg - Message or exception instance
+     * @param {boolean} always - Fatal error, always throw
+     * @throws {Exception}
      * @return {void}
      */
-    _report( msg, type ) {
+    error( msg, always = false ) {
 
-        // In silent, without strict mode, errors will be swallowed
-        if ( this._config.strict ) {
-            throw new Error( msg );
-        } else if ( this._mode && this._mode[ type ] ) {
-            this._mode[ type ]( msg );
-        } else if ( !this._config.silent ) {
+        // In strict mode we always throw
+        if ( always || this._config.strict ) {
+            throw msg;
+        }
 
-            // eslint-disable-next-line no-console
-            console.warn( '[' + type + '] ' + msg );
+        // If we are not silent and we have a fitting error logger
+        if ( !this._config.silent && this._cfx && typeof this._cfx.error === 'function' ) {
+            this._cfx.error( this._exceptionAsOutput( msg ) );
         }
     }
 
     /**
-     * Logs to output
-     * @protected
-     * @param {*} output - Any loggable output
+     * Warning output
+     *  Throw in strict mode, always with trace
+     *  Notify in normal mode
+     *  Show full trace in verbose mode unless suppressed with noTrace
+     * @public
+     * @param {string|Error|Exception} msg - Message or exception instance
+     * @param {boolean} always - Always show warning
+     * @param {boolean} noTrace - Do not output trace since it is internal
+     * @throws {Exception}
+     * @return {void}
+     */
+    warn( msg, always = false, noTrace = false ) {
+        let show = false;
+        if ( always || this._config.strict ) {
+
+            // In strict mode we always throw
+            if ( this._config.strict ) {
+                throw msg;
+            }
+
+            // If always is set, but not strict, we wont to show the warning
+            show = true;
+        } else if ( !this._config.silent && this._cfx && typeof this._cfx.warn === 'function' ) {
+
+            // If we are not silent and we have a fitting warning logger
+            show = true;
+        }
+        if ( show ) {
+            this._cfx.warn( this._exceptionAsOutput( msg, noTrace ) );
+        }
+    }
+
+    /**
+     * Report message
+     *  Notify if not silent
+     *  Unless always
+     *  Can show an optional trace if Exception
+     *  Type 'success' does a fallback to 'log' if not available
+     * @public
      * @param {('log'|'info'|'success')} type - Type of reporting if cfx available
+     * @param {string|Exception} msg - Message or exception instance
+     * @param {boolean} always - Always show warning
+     * @param {boolean} showTrace - Show message trace if its an Exception
      * @return {void}
      */
-    _log( output, type = 'log' ) {
-        if ( this._config.silent ) {
+    _report( type, msg, always = false, showTrace = false ) {
+        let show = always;
+        if ( !this._config.silent ) {
 
-            // We do not want any output at all in silent mode
-            return;
+            // If we are not silent and we have a fitting logger
+            show = true;
         }
-        if ( this._cfx && this._cfx[ type ] ) {
-            this._cfx[ type ]( output );
-        } else {
+        if ( show && this._cfx ) {
 
-            // eslint-disable-next-line no-console
-            console.log( output );
+            // Fallback to log method if not available
+            if ( type === 'success' && typeof this._cfx[ type ] !== 'function' ) {
+                type = 'log';
+            }
+            if ( typeof this._cfx[ type ] === 'function' ) {
+                this._cfx[ type ]( this._exceptionAsOutput( msg, !showTrace ) );
+            }
         }
     }
 
     /**
-     * Set reporting mode
-     * @private
+     * Log message
+     * @public
+     * @param {string|Exception} msg - Message or exception instance
+     * @param {boolean} always - Always show warning
+     * @param {boolean} showTrace - Show message trace if its an Exception
      * @return {void}
      */
-    _setMode() {
+    log( msg, always = false, showTrace = false ) {
+        this._report( 'log', msg, always, showTrace );
+    }
 
-        // Default ignore/swallow errors mode
-        this._mode = {
-            log : () => {},
-            error : () => {},
-            info : () => {},
-        };
+    /**
+     * Info message
+     * @public
+     * @param {string|Exception} msg - Message or exception instance
+     * @param {boolean} always - Always show warning
+     * @param {boolean} showTrace - Show message trace if its an Exception
+     * @return {void}
+     */
+    info( msg, always = false, showTrace = false ) {
+        this._report( 'info', msg, always, showTrace );
+    }
 
-        // Verbose mode
-        if ( this._config.verbose ) {
-            this._mode = this._cfx;
-        }
-
-        // Strict and silent mode overrides all
-        if ( this._config.strict || this._config.silent ) {
-            this._mode = null;
-        }
+    /**
+     * Success message
+     * @public
+     * @param {string|Exception} msg - Message or exception instance
+     * @param {boolean} always - Always show warning
+     * @param {boolean} showTrace - Show message trace if its an Exception
+     * @return {void}
+     */
+    success( msg, always = false, showTrace = false ) {
+        this._report( 'success', msg, always, showTrace );
     }
 
     /**
@@ -344,26 +434,30 @@ class TwigHouse extends Core {
      * @public
      * @param {TwigHouseConfig} config - Config object
      * @param {boolean} ignoreNull - Do not set null value options and preserve current
+     * @throws {Exception}
      * @return {void}
      */
     setConfig( config, ignoreNull = false ) {
-        if ( this._lockConfig ) {
-            this._warn( 'The config is locked' + ( this._config.verbose ?
-                ', none of the following values were set:'
-                : ', enable verbose mode for the actual value output' )
-            );
-            if ( this._config.verbose ) {
-                this._log( config );
-            }
-            return;
-        }
         if ( isPojo( config ) ) {
+
+            // Check locked mode
+            if ( this._lockConfig ) {
+                const msg = 'The TwigHouse config is locked' +
+                    ( this._config.verbose ?
+                        ', none of the values were set'
+                        : ', enable verbose mode for the actual value output' );
+                const previous = this._config.verbose ? JSON.stringify( config, null, 2 ) : '';
+                this.warn( new TwigHouseWarning( msg, previous ), true );
+                return;
+            }
+
+            // Check contents
             if ( Object.keys( config ).length ) {
                 if ( ignoreNull ) {
                     const entries = Object.entries( config );
                     for ( let i = 0; i < entries.length; i++ ) {
                         const [ key, value ] = entries[ i ];
-                        if ( value !== null ) {
+                        if ( value !== null && typeof value !== 'undefined' ) {
                             this._config[ key ] = value;
                         }
                     }
@@ -371,10 +465,10 @@ class TwigHouse extends Core {
                     Object.assign( this._config, config );
                 }
             } else {
-                this._warn( 'Attempting to set config with no values' );
+                this.warn( new TwigHouseWarning( 'Attempting to set config with no values' ), false, true );
             }
         } else {
-            this._error( 'Invalid config argument type: ' + typeof config + ' must be a plain object' );
+            this.error( new TwigHouseException( 'Invalid config argument type: ' + typeof config + ' must be a plain object' ), true );
         }
     }
 
@@ -382,6 +476,7 @@ class TwigHouse extends Core {
      * Initialize
      * @public
      * @param {null|TwigHouseConfig} config - Config object
+     * @throws {Exception}
      * @return {void}
      */
     async init( config = null ) {
@@ -389,21 +484,21 @@ class TwigHouse extends Core {
         // Set config
         this.setConfig( config );
 
-        // Set reporting mode
-        this._setMode();
-
         // Init fs
-        this.fs = new FsInterface( this._config.silent, this._mode );
+        this.fs = new FsInterface();
 
-        // Load config from cwd
-        if ( this._config.__configname ) {
+        // Load config from cwd/source
+        if ( typeof this._config.__configname === 'string' && this._config.__configname.length ) {
             await this._loadConfig();
+        } else {
+            this.error( new TwigHouseException( 'Invalid config value for __configname, must be a possible filename' ), true );
         }
     }
 
     /**
      * Load config from src directory
      * @private
+     * @throws {Exception}
      * @return {Promise<void>} - Loads and assigns config if available
      */
     async _loadConfig() {
@@ -411,22 +506,35 @@ class TwigHouse extends Core {
         const config_exists = await this.fs.exists( config_path );
         if ( config_exists ) {
             if ( this._config.verbose ) {
-                this._info( 'Reading config from: ' + config_path );
+                this.info( 'Reading config from: ' + config_path );
             }
-            const config = await this.fs.readJSON( config_path );
-            if ( !config ) {
-                this._error( 'Failed to load config from: ' + config_path );
+            let config, err;
+            try {
+                config = await this.fs.readJSON( config_path );
+            } catch ( e ) {
+                err = e;
+            }
+
+            if ( err || !config || typeof config !== 'object' ) {
+
+                // Always fail if invalid object
+                this.error( new TwigHouseException( 'Failed to load config from: ' + config_path, err ), true );
             } else {
+
+                // Disallow verbose and silent option
+                delete config.verbose;
+                delete config.silent;
                 Object.assign( this._config, config );
             }
         } else if ( this._config.verbose ) {
-            this._info( 'Could define a config at: ' + config_path );
+            this.info( 'Could define a config at: ' + config_path );
         }
     }
 
     /**
      * Enable an internal directive
      * @param {string} name - Directive name
+     * @throws {Exception}
      * @return {void}
      */
     useDirective( name ) {
@@ -435,21 +543,26 @@ class TwigHouse extends Core {
         try {
             directive = require( directive_path );
         } catch ( e ) {
-            this._log( e );
-            this._error( 'Unknown native directive: ' + name );
-            return null;
+
+            // Always rethrow
+            this.error( new TwigHouseException( 'Unknown native directive: ' + name, e ), true );
         }
         if ( typeof directive !== 'function' ) {
-            this._error( 'Directive must be a function: ' + name );
-            return;
+
+            // Must be a function, we cannot ignore that
+            this.error( new TwigHouseException( 'Directive must be a function: ' + name ), true );
         }
+
+        // Check if the native directive is already in use
         if ( this._directivesInUse.includes( name ) ) {
-            this._warn( 'Directive already in use: ' + name );
+            this.warn( new TwigHouseWarning( 'Directive already in use: ' + name ) );
             return;
         }
+
+        // Add directive and notify
         this._directivesInUse.push( name );
         if ( this._config.verbose ) {
-            this._info( 'Using directive: ' + name );
+            this.info( 'Using directive: ' + name );
         }
         this.registerDirective( name, directive );
     }
@@ -477,16 +590,18 @@ class TwigHouse extends Core {
      * @public
      * @param {string} name - Directive name
      * @param {string} fn - Directive function
+     * @throws {Exception}
      * @return {void}
      */
     registerDirective( name, fn ) {
         if ( !this.plugins ) {
-            this._error( 'Plugins not defined, too early to register directives' );
-            return;
+
+            // Always throw since we really cant set anything yet
+            this.error( new TwigHouseException( 'Plugins not defined, too early to register directives' ), true );
         }
         if ( this.plugins.method( this._config.directivePrefix + name, fn ) ) {
             if ( this._config.verbose ) {
-                this._info( 'Registered directive: ' + name );
+                this.info( 'Registered directive: ' + name );
             }
         }
     }
@@ -522,8 +637,12 @@ class TwigHouse extends Core {
             const plugin_path = this.getPath( 'plugins' );
             fs_plugins = await this.fs.fileList( plugin_path, this._config.pluginExt );
         }
+
+        // Always use provided argument over the default filesystem list
         const load_plugins = plugin_paths || fs_plugins;
         await this.loadPlugins( load_plugins );
+
+        // Return how many plugins were loaded
         return Object.keys( this.plugins._p ).length;
     }
 
@@ -550,6 +669,7 @@ class TwigHouse extends Core {
      * Get path from config
      * @param {('root'|'data'|'fragments'|'plugins'|'templates'|'target')} name - Option name
      * @param {boolean} absolute - Set true to return an absolute path
+     * @throws {Exception}
      * @return {string|null} - Path or null if option name was invalid
      */
     getPath( name = 'root', absolute = false ) {
@@ -569,7 +689,7 @@ class TwigHouse extends Core {
             }
 
         } else {
-            this._error( 'Unknown path option: ' + name );
+            this.error( new TwigHouseException( 'Unknown path option: ' + name ) );
             return null;
         }
 
@@ -589,7 +709,11 @@ class TwigHouse extends Core {
         const load_plugins = [ ...this._config.usePlugins, ...plugin_paths ];
 
         // Init plugins
-        this.plugins = new Plugins( [], [], this, this._config.silent, this._mode );
+        this.plugins = new Plugins( this, this._config.strict );
+
+        // Now we lock the config and prevent plugins from setting any values
+        // This only causes errors/warnings to throw when using the setConfig method
+        this._lockConfig = true;
 
         // Use builtin directives before loading plugins
         // this ensures there are no collisions of internals,
@@ -601,10 +725,6 @@ class TwigHouse extends Core {
 
         // Run twig modify and allow plugins to modify config
         await this.plugins.run( 'twig', [ Twig, this ] );
-
-        // Now we lock the config
-        // This only causes errors/warnings to throw when using the setConfig method
-        this._lockConfig = true;
     }
 
     /**
@@ -629,6 +749,7 @@ class TwigHouse extends Core {
      * Load pages data
      * @param {Array<string>} collection - Paths/reference collection
      * @param {Array<string>} limit_index - Limit the collection elements
+     * @throws {Exception}
      * @return {Promise<void>} - Possibly throws errors in strict mode
      */
     async collectPagesData( collection, limit_index = [] ) {
@@ -658,7 +779,9 @@ class TwigHouse extends Core {
                 this._data[ ref ] = json;
 
             } else if ( !limit_index.length ) {
-                this._warn( 'No page data loaded from: ' + collection[ i ] );
+
+                // We dont have a limit set, so we need to warn for possible empty data
+                this.warn( new TwigHouseWarning( 'No page data loaded from: ' + collection[ i ] ), false, true );
             }
         }
     }
@@ -668,6 +791,7 @@ class TwigHouse extends Core {
      * @param {string} file - File path
      * @param {Array<string>} limit_index - Limit the collection by reference
      * @param {TwigHouseDocument} doc - Document object
+     * @throws {Exception}
      * @return {Promise<(string|*)[]|null>} - Null on skip or array with reference and json data
      */
     async buildPageData( file, limit_index, doc ) {
@@ -678,11 +802,18 @@ class TwigHouse extends Core {
         }
 
         // Load page json
-        const json = await this.getPageJson( file, doc );
+        let json;
+        try {
+            json = await this.getPageJson( file, doc );
+        } catch ( e ) {
+            this.error( new TwigHouseException( 'Page data has errors: '
+                + ( this._config.verbose ? doc.source : doc.ref ), e ) );
+        }
 
         // Empty json data
-        if ( json instanceof Array && !json.length || !Object.keys( json ).length ) {
-            this._error( 'Page contains no data: ' + doc.ref );
+        if ( !json || !isPojo( json ) || !Object.keys( json ).length ) {
+            this.error( new TwigHouseException( 'Page contains no data: '
+                + ( this._config.verbose ? doc.source : doc.ref ) ) );
             return null;
         }
 
@@ -700,6 +831,7 @@ class TwigHouse extends Core {
      * Get page json
      * @param {string} file - Json path to load
      * @param {TwigHouseDocument} doc - Document object
+     * @throws {FsInterfaceException}
      * @return {Promise<Array|Object>} - Compiled page json
      */
     async getPageJson( file, doc ) {
@@ -720,6 +852,7 @@ class TwigHouse extends Core {
      * @param {Array|Object} source - JSON source
      * @param {Array|Object} compiled - Target reference
      * @param {TwigHouseDocument} doc - Document object
+     * @throws {Exception}
      * @return {Promise<void>} - Possibly throws errors in strict mode
      */
     async resolvePageJsonTree( source, compiled, doc ) {
@@ -732,9 +865,13 @@ class TwigHouse extends Core {
                 if ( fragment ) {
                     await this.resolvePageJsonTree( fragment, compiled, doc );
                 } else {
+
+                    // Set an error array on the current object
                     compiled.__error = compiled.__error || [];
                     compiled.__error.push( 'Failed to resolve fragment: ' + source[ this._config.fragmentProperty ] );
-                    this._error( compiled.__error[ compiled.__error.length - 1 ] );
+
+                    // Silence, notify or throw in strict mode
+                    this.error( new TwigHouseException( compiled.__error[ compiled.__error.length - 1 ] ) );
                 }
             }
 
@@ -767,6 +904,7 @@ class TwigHouse extends Core {
      * @public
      * @param {Object} compiled - Compiled object
      * @param {TwigHouseDocument} doc - TwigHouseDocument object
+     * @throws {Exception}
      * @return {Promise<void>} - Possibly throws errors in strict mode
      */
     async processDirectives( compiled, doc ) {
@@ -778,24 +916,31 @@ class TwigHouse extends Core {
                 if ( !this.plugins.has( method ) ) {
 
                     // Unregistered directive lets notify and skip along to the next
-                    const msg = 'Directive not defined: ' + name;
                     if ( this._config.ignoreDirectives ) {
                         if ( this._config.verbose ) {
-                            this._info( msg );
+                            this.info( 'Skipping undefined directive: ' + name );
                         }
                     } else {
-                        this._warn( msg );
+                        this.warn( new TwigHouseWarning( 'Directive not defined: ' + name ), false, true );
                     }
                     continue;
                 }
 
                 // Notify target property not set
-                if ( this._config.verbose && typeof compiled[ key ] === 'undefined' ) {
-                    this._warn( 'Directive property not defined: ' + name + '@' + key );
+                if ( typeof compiled[ key ] === 'undefined' ) {
+                    const notDefined = 'Directive property not defined: ' + name + '@' + key
+                        + ' in document: ' + doc.ref;
+                    this.warn( new TwigHouseWarning( notDefined ), false, true );
                 }
 
                 // Run directive methods
-                const stats = await this.plugins.run( method, [ compiled[ key ], key, compiled, doc, this, ...args ] );
+                const plugin_args = [ compiled[ key ], key, compiled, doc, this, ...args ];
+                let stats;
+                try {
+                    stats = await this.plugins.run( method, plugin_args );
+                } catch ( e ) {
+                    this.error( new TwigHouseException( 'Directive "' + name + '" failed in: ' + doc.ref, e ) );
+                }
                 if ( !this.directiveStats[ name ] ) {
                     this.directiveStats[ name ] = 0;
                 }
@@ -869,13 +1014,14 @@ class TwigHouse extends Core {
      * @private
      * @param {string} doc - Html document
      * @param {Object} data - Page data
+     * @throws {Exception}
      * @return {null|string} - Minified document
      */
     _minify_doc( doc, data ) {
         try {
             return minify( doc, data[ this._config.minifyProperty ] || this._config.minifyOptions );
         } catch ( e ) {
-            this._error( e );
+            this.error( new TwigHouseException( 'Failed to minify document: ' + data.document.ref, e ), true );
         }
         return null;
     }
@@ -884,6 +1030,7 @@ class TwigHouse extends Core {
      * Write documents
      * @param {null|string} target - Target path or null for config value
      * @param {('html'|'json')} type - Type of data to write
+     * @throws {Exception}
      * @return {Promise<number>} - Number of documents written
      */
     async write( target = null, type = 'html' ) {
@@ -899,9 +1046,14 @@ class TwigHouse extends Core {
             const { dir } = path.parse( doc_path );
 
             // Ensure directory
-            const dir_available = await this.fs.dir( path.resolve( dir ) );
-            if ( !dir_available ) {
-                this._error( 'Failed to create directory: ' + dir );
+            let dir_available, err;
+            try {
+                dir_available = await this.fs.dir( path.resolve( dir ) );
+            } catch ( e ) {
+                err = e;
+            }
+            if ( err || !dir_available ) {
+                this.error( new TwigHouseException( 'Failed to create directory: ' + dir, err ) );
                 continue;
             }
 
@@ -923,7 +1075,7 @@ class TwigHouse extends Core {
             if ( wrote ) {
                 write_count++;
                 if ( this._config.verbose ) {
-                    this._info( 'Wrote: ' + doc_path + ' for page: ' + key );
+                    this.info( 'Wrote: ' + doc_path + ' for page: ' + key );
                 }
             }
         }
@@ -935,11 +1087,12 @@ class TwigHouse extends Core {
      * @private
      * @param {string} ref - Template reference
      * @param {Object} data - Page data object
+     * @throws {Exception}
      * @return {Promise<null>} - Possibly throws errors in strict mode
      */
     async _getTemplatePath( ref, data ) {
         if ( !this.documentAvailable( data ) ) {
-            this._error( 'Page data must contain a valid document property' );
+            this.error( new TwigHouseException( 'Page data must contain a valid document property' ) );
             return null;
         }
 
@@ -967,9 +1120,8 @@ class TwigHouse extends Core {
             let path_exists = false;
             if ( isUrl( src ) ) {
 
-                // Cannot load templates from urls
-                path_exists = false;
-                this._error( 'Cannot load template from url: ' + src );
+                // Cannot load templates from urls, always fatal
+                this.error( new TwigHouseException( 'Cannot load template from url: ' + src ), true );
 
             } else {
                 path_exists = await this.fs.exists( src );
@@ -979,14 +1131,14 @@ class TwigHouse extends Core {
             if ( path_exists ) {
                 available_path = src;
                 if ( this._config.verbose ) {
-                    this._info( 'Using template: ' + paths[ i ] + this._config.templateExt + ' for page: ' + ref );
+                    this.info( 'Using template: ' + paths[ i ] + this._config.templateExt + ' for page: ' + ref );
                 }
                 break;
             }
 
             // Only notify if verbose
             if ( this._config.verbose ) {
-                this._info( 'Template not found: ' + paths[ i ] + this._config.templateExt + ' for page: ' + ref );
+                this.info( 'Template not found: ' + paths[ i ] + this._config.templateExt + ' for page: ' + ref );
             }
         }
         return available_path;
@@ -998,15 +1150,16 @@ class TwigHouse extends Core {
      * @param {string} template - Template path
      * @param {Object} data - Template data
      * @param {string} ref - Template reference
+     * @throws {Exception}
      * @return {Promise<string>} - Rendered template
      */
     renderTemplate( template, data, ref ) {
         return new Promise( ( resolve, reject ) => {
             Twig.renderFile( template, data, ( err, html ) => {
                 if ( err ) {
-                    this._error( 'Template error in: ' + ref );
-                    this._error( err );
-                    reject( err );
+                    const twex = new TwigHouseException( 'Template error in: ' + ref, err );
+                    this.error( twex );
+                    reject( twex );
                 } else {
                     resolve( html );
                 }
@@ -1030,6 +1183,7 @@ class TwigHouse extends Core {
     /**
      * Render pages
      * @public
+     * @throws {Exception}
      * @return {Promise<number>} - Number of pages rendered
      */
     async render() {
@@ -1038,14 +1192,14 @@ class TwigHouse extends Core {
             if ( !Object.keys( value ).length ) {
 
                 // Skip along we have no data
-                this._error( 'No data available for page: ' + key );
+                this.error( new TwigHouseException( 'No data available for page: ' + key ) );
                 continue;
             }
             const template = await this._getTemplatePath( key, value );
             if ( !template ) {
 
                 // Skip along if we cannot find a template
-                this._error( 'Failed to load any template for page: ' + key );
+                this.error( new TwigHouseException( 'Failed to load any template for page: ' + key ) );
                 continue;
             }
 
@@ -1056,4 +1210,7 @@ class TwigHouse extends Core {
         return render_count;
     }
 }
+
+// Export TwigHouseException as static property constructor
+TwigHouse.TwigHouseException = TwigHouseException;
 module.exports = TwigHouse;

@@ -7,7 +7,7 @@
  */
 module.exports = function exampleTwig( Twig, twigH ) {
     if ( twigH._config.verbose ) {
-        twigH._info( 'ExamplePlugin [twig] >>> Running @squirrel-forge/twighouse@' + twigH.VERSION + ' with twig@' + Twig.VERSION );
+        twigH.info( 'ExamplePlugin [twig] >>> Running @squirrel-forge/twighouse@' + twigH.VERSION + ' with twig@' + Twig.VERSION );
     }
 
     // Use this method to:

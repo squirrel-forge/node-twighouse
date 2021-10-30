@@ -7,6 +7,6 @@
  */
 module.exports = function exampleDoc( ref, doc, twigH ) {
     if ( twigH._config.verbose ) {
-        twigH._info( 'ExamplePlugin [doc] >>> ' + ref + '::' + doc.uri );
+        twigH.info( 'ExamplePlugin [doc] >>> ' + ref + '::' + doc.uri );
     }
 };

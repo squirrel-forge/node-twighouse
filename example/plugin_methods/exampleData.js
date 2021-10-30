@@ -62,6 +62,6 @@ module.exports = async function exampleData( ref, data, twigH ) {
 
     // Let see how many properties this page has
     if ( twigH._config.verbose ) {
-        twigH._info( 'ExamplePlugin [data] >>> ' + ref + '::' + countRecursive( data ) + ' entries' );
+        twigH.info( 'ExamplePlugin [data] >>> ' + ref + '::' + countRecursive( data ) + ' entries' );
     }
 };
