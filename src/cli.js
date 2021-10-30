@@ -201,24 +201,27 @@ module.exports = async function cli() {
         process.exit( 0 );
     }
 
+    // Construct application
+    //  - Set output handler
+    //  - Prepare instance
+    const twigH = new TwigHouse( cfx );
+
     // Deploy example
     if ( options.example ) {
         try {
-            const results = await copy( path.join( this.installDirectory, 'example' ), target );
+            const results = await copy( path.join( twigH.installDirectory, 'example' ), target );
             if ( results && results.length ) {
-                cfx.info( 'Copied ' + results.length + ' example files' );
+                cfx.success( 'Copied ' + results.length + ' example files' );
+                process.exit( 0 );
+            } else {
+                cfx.error( 'Did not copy any example files' );
+                process.exit( 1 );
             }
-            process.exit( 0 );
         } catch ( err ) {
             cfx.error( err );
             process.exit( 1 );
         }
     }
-
-    // Construct application
-    //  - Set output handler
-    //  - Prepare instance
-    const twigH = new TwigHouse( cfx );
 
     // Notify source/cwd in verbose
     if ( !config.silent && config.verbose ) {
