@@ -20,4 +20,6 @@ $RECYCLE.BIN/
 # Much credit to http://gitignore.io
 
 ### Internal ###
+.twighouse
+!example/.twighouse
 node_modules/
