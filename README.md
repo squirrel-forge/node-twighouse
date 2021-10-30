@@ -55,6 +55,7 @@ A long option always override the value of a short option if both are used.
 
  Short | Long          | Type      | Description
 ------ | ------------- | --------- | ---
+  -a   | --interactive | bool      | Run interactive mode
   -o   | --output-json | bool/save | Show/save compiled pages json only
   -m   | --minify      | bool      | Minifies the html output
   -l   | --limit       | str, ...  | Limit which page or pages should be compiled
@@ -64,9 +65,10 @@ A long option always override the value of a short option if both are used.
   -p   | --plugins     | path      | Overrides the plugins folder
   -c   | --data-source | str, ...  | Defines a list of data sources to load
   -i   | --verbose     | bool      | Show additional info
-  -s   | --strict      | bool      | Run in strict mode
+  -u   | --loose       | bool      | Run in loose mode, disables the strict option
   -q   | --silent      | bool      | Run in silent mode, will throw errors, but show no other output
   -v   | --version     | bool      | Show the application version
+  -y   | --show-config | bool      | Show loaded config
   -x   | --example     | bool      | Deploy example data and templates, accepts only one, the target, argument
 
 #### Using url data
