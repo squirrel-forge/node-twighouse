@@ -24,8 +24,7 @@ class FsInterface {
      * Read remote file as buffer
      * @public
      * @param {string} url - Url to file
-     * @throws {FsInterfaceException}
-     * @return {Promise<Buffer|null>} - Buffer or null on error
+     * @return {Promise<Buffer|FsInterfaceException|null>} - Buffer or null on error
      */
     remote( url ) {
         return new Promise( ( resolve ) => {
@@ -40,11 +39,11 @@ class FsInterface {
                     const file_buffer = await res.buffer();
                     resolve( file_buffer );
                 } else {
-                    throw new FsInterfaceException( res.status + '#' + res.statusText + ' for: ' + url );
+                    resolve( new FsInterfaceException( res.status + '#' + res.statusText + ' for: ' + url ) );
                 }
             };
             fetch( url ).then( success ).catch( ( err ) => {
-                throw new FsInterfaceException( err );
+                resolve( new FsInterfaceException( 'Failed to fetch url: ' + url, err ) );
             } );
         } );
     }
@@ -53,10 +52,14 @@ class FsInterface {
      * Read remote text file
      * @public
      * @param {string} url - Url to file
+     * @throws {FsInterfaceException}
      * @return {Promise<string|null>} - UTF8 string
      */
     async remoteText( url ) {
         const buf = await this.remote( url );
+        if ( buf instanceof Exception ) {
+            throw buf;
+        }
         return buf ? buf.toString( 'utf8' ) : null;
     }
 
@@ -84,14 +87,13 @@ class FsInterface {
      * @public
      * @param {string} file - Path to file
      * @param {string} enc - Charset
-     * @throws {FsInterfaceException}
-     * @return {Promise<Buffer|null>} - Buffer or null on error
+     * @return {Promise<Buffer|FsInterfaceException|null>} - Buffer or null on error
      */
     read( file, enc = 'utf8' ) {
         return new Promise( ( resolve ) => {
             fs.readFile( file, enc, ( err, content ) => {
                 if ( err ) {
-                    throw new FsInterfaceException( err );
+                    resolve( new FsInterfaceException( 'Failed to read file: ' + file, err ) );
                 } else {
                     const buffer = Buffer.from( content );
                     resolve( buffer );
@@ -104,10 +106,14 @@ class FsInterface {
      * Read local text file
      * @public
      * @param {string} file - Path to file
+     * @throws {FsInterfaceException}
      * @return {Promise<string|null>} - UTF8 string
      */
     async readText( file ) {
         const buf = await this.read( file, 'utf8' );
+        if ( buf instanceof Exception ) {
+            throw buf;
+        }
         return buf ? buf.toString( 'utf8' ) : null;
     }
 
@@ -154,14 +160,13 @@ class FsInterface {
      * @public
      * @param {string} file - Filepath to write
      * @param {string} content - File content
-     * @throws {FsInterfaceException}
-     * @return {Promise<boolean>} - True if the file was created
+     * @return {Promise<boolean|FsInterfaceException>} - True if the file was created
      */
     write( file, content ) {
         return new Promise( ( resolve ) => {
             fs.writeFile( file, content, ( err ) => {
                 if ( err ) {
-                    throw new FsInterfaceException( 'Failed to write file: ' + file, err );
+                    resolve( new FsInterfaceException( 'Failed to write file: ' + file, err ) );
                 } else {
                     resolve( true );
                 }
@@ -173,14 +178,13 @@ class FsInterface {
      * Write local dir
      * @public
      * @param {string} dir - Directory path
-     * @throws {FsInterfaceException}
-     * @return {Promise<boolean>} - True if directory exists or was created
+     * @return {Promise<boolean|FsInterfaceException>} - True if directory exists or was created
      */
     dir( dir ) {
         return new Promise( ( resolve ) => {
             fs.mkdir( dir, { recursive : true }, ( err ) => {
                 if ( err ) {
-                    throw new FsInterfaceException( 'Failed to create directory: ' + dir, err );
+                    resolve( new FsInterfaceException( 'Failed to create directory: ' + dir, err ) );
                 } else {
                     resolve( true );
                 }

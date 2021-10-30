@@ -609,7 +609,7 @@ class TwigHouse {
     /**
      * Get document for reference
      * @param {string} ref - Page reference
-     * @return {null|Object} - Page data
+     * @return {null|TwigHouseDocument} - Page document
      */
     getDoc( ref ) {
         return this._docs[ ref ] || null;
@@ -754,6 +754,9 @@ class TwigHouse {
      */
     async collectPagesData( collection, limit_index = [] ) {
         const refs = await this.prepareDocuments( collection );
+        if ( !this._config.silent && this._config.verbose ) {
+            this.success( 'Loaded ' + refs.length + ' reference document' + ( refs.length !== 1 ? 's' : '' ) );
+        }
         for ( let i = 0; i < collection.length; i++ ) {
             let page_data = [ collection[ i ], {} ];
             if ( this.plugins.has( 'loader' ) ) {
@@ -836,10 +839,15 @@ class TwigHouse {
      */
     async getPageJson( file, doc ) {
         let source;
-        if ( isUrl( file ) ) {
-            source = await this.fs.remoteJSON( file );
-        } else {
-            source = await this.fs.readJSON( file );
+        try {
+            if ( isUrl( file ) ) {
+                source = await this.fs.remoteJSON( file );
+            } else {
+                source = await this.fs.readJSON( file );
+            }
+        } catch ( e ) {
+            this.error( new TwigHouseException( 'Failed to read page JSON at: ' + file, e ) );
+            return null;
         }
         const compiled = {};
         await this.resolvePageJsonTree( source, compiled, doc );
@@ -1046,14 +1054,9 @@ class TwigHouse {
             const { dir } = path.parse( doc_path );
 
             // Ensure directory
-            let dir_available, err;
-            try {
-                dir_available = await this.fs.dir( path.resolve( dir ) );
-            } catch ( e ) {
-                err = e;
-            }
-            if ( err || !dir_available ) {
-                this.error( new TwigHouseException( 'Failed to create directory: ' + dir, err ) );
+            const dir_available = await this.fs.dir( path.resolve( dir ) );
+            if ( !dir_available || dir_available instanceof Exception ) {
+                this.error( new TwigHouseException( 'Failed to create directory: ' + dir, dir_available ) );
                 continue;
             }
 
@@ -1072,6 +1075,9 @@ class TwigHouse {
 
             // Write document and notify if requested
             const wrote = await this.fs.write( doc_path, doc );
+            if ( wrote instanceof Exception ) {
+                this.error( wrote );
+            }
             if ( wrote ) {
                 write_count++;
                 if ( this._config.verbose ) {

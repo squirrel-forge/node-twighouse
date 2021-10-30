@@ -182,7 +182,7 @@ class Plugins {
             } catch ( e ) {
 
                 // We do not error here, because this is ok, it could be a local file
-                this.hints.push( 'Plugin could not be loaded as node module: ' + src_path );
+                this.hints.push( 'Plugin could not be loaded as node module name: ' + src_path );
             }
 
             // Attempt to load plugin from a resolved local path

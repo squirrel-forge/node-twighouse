@@ -1,7 +1,10 @@
 # Changelog
 
+## 0.8.3
+ - Cleaned up error handling and output, added interactive mode, fixed setFromDoc directive for unknown uri/url.
+
 ## 0.7.8
- - Added document object and setFromDoc directive performed some cleanups
+ - Added document object and setFromDoc directive performed some cleanups.
 
 ## 0.7.2
  - Minor features, fixes and documentation update.

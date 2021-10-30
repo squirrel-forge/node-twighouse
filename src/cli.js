@@ -4,9 +4,27 @@
 const path = require( 'path' );
 const copy = require( 'recursive-copy' );
 const cfx = require( '@squirrel-forge/node-cfx' ).cfx;
-const isUrl = require( './fn/isUrl' );
-const CliInput = require( './classes/CliInput' );
 const TwigHouse = require( './classes/TwigHouse' );
+const CliInput = require( './classes/CliInput' );
+const isUrl = require( './fn/isUrl' );
+
+/**
+ * Set config values from interactive answers
+ * @param {Object} config - Config object
+ * @param {Object} answers - Answers object
+ * @return {void}
+ */
+function setFromInteractive( config, answers ) {
+    const answer_entries = Object.entries( answers );
+    for ( let i = 0; i < answer_entries.length; i++ ) {
+        const [ name, value ] = answer_entries[ i ];
+        switch ( typeof value ) {
+        case 'string' :
+        case 'boolean' :
+            config[ name ] = value;
+        }
+    }
+}
 
 /**
  * TwigHouse cli application
@@ -15,7 +33,7 @@ const TwigHouse = require( './classes/TwigHouse' );
 module.exports = async function cli() {
 
     // Input
-    const input = new CliInput();
+    const input = new CliInput( cfx );
 
     // Main arguments
     let source = input.arg( 0 ) || '',
@@ -37,10 +55,13 @@ module.exports = async function cli() {
         // Deploy example
         example : [ '-x', '--example', false, true ],
 
+        // Ask for input and replace all other input options and config
+        ask : [ '-a', '--interactive', false, true ],
+
         // Limit to a specific page path or paths
         limit : [ '-l', '--limit', '', false ],
 
-        // Only output the generated json
+        // Only output the generated json, set to 'save' to save files to target
         output : [ '-o', '--output-json', false ],
 
         // Data sources overrides default local read
@@ -49,6 +70,51 @@ module.exports = async function cli() {
         // Do not break on any error, disables the default strict if set
         loose : [ '-u', '--loose', null, true ],
     } );
+
+    // Checks for ask mode
+    if ( options.ask ) {
+
+        // Should not define any arguments or flags when in interactive mode
+        if ( input.hasArgs() > 0 || input.hasFlags() > 1 ) {
+            cfx.error( 'Do not specify any arguments or options when using interactive mode!' );
+            process.exit( 1 );
+        }
+
+        // Check silent mode should not be used with interactive
+        const check_silent = input.getFlagsOptions( { is : [ '-q', '--silent', false, true ] } );
+        if ( check_silent.is ) {
+            cfx.error( 'Cannot run interactive and silent at the same time!' );
+            process.exit( 1 );
+        }
+
+        // Get answers for arguments
+        let answers = await input.ask( {
+            source : { question : 'Specify source path or url: (skip uses current working directory)' },
+            target : { question : 'Specify target path: (skip uses current working directory)' },
+        } );
+        source = answers.source || '';
+        target = answers.target || '';
+
+        // Get answers to cli options
+        answers = await input.ask( {
+            version : { question : 'Show version? (yes/no)', is_bool : true, last : true },
+            config : { question : 'Show loaded config settings? (yes/no)', is_bool : true, last : true },
+            example : { question : 'Deploy example? (yes/no)', is_bool : true, last : true },
+            limit : { question : 'Filter pages? (reference or comma separated list)' },
+            output_bool : { question : 'Output JSON? (yes/no)', is_bool : true },
+            output_save : { question : 'Write JSON? (save/skip)', validate : ( v ) => { return v === 'save'; } },
+            data : { question : 'Specify data sources? (path, uri or url or comma separated list)' },
+            loose : { question : 'Run in loose mode? (yes/no)', is_bool : true },
+        } );
+
+        // Translate output answers to option name and remove source values
+        answers.output = answers.output_save === 'save' ? 'save' : answers.output_bool;
+        delete answers.output_bool;
+        delete answers.output_save;
+
+        // Apply to options object
+        setFromInteractive( options, answers );
+    }
 
     // Limit option must be an Array
     if ( !( options.limit instanceof Array ) ) {
@@ -86,6 +152,21 @@ module.exports = async function cli() {
         // Minify the compiled documents
         minify : [ '-m', '--minify', null ],
     } );
+
+    // Get answers to twighouse config
+    if ( options.ask ) {
+        const answers = await input.ask( {
+            verbose : { question : 'Run in verbose mode? (yes/no)', is_bool : true },
+            data : { question : 'Data directory? (path, uri or url)' },
+            fragments : { question : 'Fragments directory? (path, uri or url)' },
+            templates : { question : 'Templates directory? (path, uri or url)' },
+            plugins : { question : 'Plugins directory? (path, uri or url)' },
+            minify : { question : 'Minify html output? (yes/no)', is_bool : true },
+        } );
+
+        // Apply to config object
+        setFromInteractive( config, answers );
+    }
 
     // Cannot use verbose and silent option together
     if ( config.verbose && config.silent ) {
@@ -172,6 +253,11 @@ module.exports = async function cli() {
         twigH.setConfig( { strict : false } );
     }
 
+    // Notify strict mode
+    if ( twigH._config.strict && twigH._config.verbose ) {
+        cfx.warn( 'Running in strict mode!' );
+    }
+
     // Show active config object
     if ( options.config ) {
         cfx.log( 'TwigHouseConfig: ' + JSON.stringify( twigH._config, null, 2 ) );
@@ -233,6 +319,13 @@ module.exports = async function cli() {
             cfx.success( 'twighouse compile completed for ' + wrote + ' page' + ( wrote === 1 ? '' : 's' ) );
 
         } else {
+
+            // Remove known circular references
+            const data_entries = Object.entries( twigH._data );
+            for ( let i = 0; i < data_entries.length; i++ ) {
+                const [ , data ] = data_entries[ i ];
+                delete data.document._twigH;
+            }
 
             // All we want is to show as output
             cfx.log( JSON.stringify( twigH._data, null, 2 ) );

@@ -1,4 +1,9 @@
 /**
+ * Requires
+ */
+const isUrl = require( '../fn/isUrl' );
+
+/**
  * Get property value from document
  * @param {string} ref - Page reference
  * @param {string} type - Any document property
@@ -12,9 +17,10 @@ function getFromReference( ref, type, twigH ) {
             return doc[ type ];
         }
         throw Error( 'Property "' + type + '" does not exist on document: ' + ref );
-    } else {
+    } else if ( !isUrl( ref ) && ref[ 0 ] !== '/' ) {
         throw Error( 'Could not fetch "' + type + '" on document not found: ' + ref );
     }
+    return null;
 }
 
 /**
@@ -44,9 +50,15 @@ module.exports = function setFromDoc(
     type = type || set || get;
     if ( items instanceof Array ) {
         for ( let i = 0; i < items.length; i++ ) {
-            items[ i ][ set ] = getFromReference( items[ i ][ get ], type, twigH );
+            const value = getFromReference( items[ i ][ get ], type, twigH );
+            if ( value !== null && typeof value !== 'undefined' ) {
+                items[ i ][ set ] = value;
+            }
         }
     } else {
-        parent[ set ] = getFromReference( items, type, twigH );
+        const value = getFromReference( items, type, twigH );
+        if ( value !== null && typeof value !== 'undefined' ) {
+            parent[ set ] = value;
+        }
     }
 };
