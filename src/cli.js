@@ -46,6 +46,9 @@ module.exports = async function cli() {
     // Cli application options
     const options = input.getFlagsOptions( {
 
+        // Development mode
+        dev : [ '', '--dev', false, true ],
+
         // Show version
         version : [ '-v', '--version', false, true ],
 
@@ -204,7 +207,7 @@ module.exports = async function cli() {
     // Construct application
     //  - Set output handler
     //  - Prepare instance
-    const twigH = new TwigHouse( cfx );
+    const twigH = new TwigHouse( cfx, options.dev );
 
     // Deploy example
     if ( options.example ) {

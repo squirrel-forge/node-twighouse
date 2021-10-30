@@ -59,8 +59,8 @@ module.exports = {
             twigH.plugins.method( 'loader', exampleLoader );
         }
 
-        // Enable a builtin directive
-        // twigH.useDirective( 'navItemActive' );
+        // Enable a single builtin directive
+        // twigH.useDirective( 'isDocValue' );
 
         // Or use all directives
         twigH.registerBuiltinDirectives( 'all' );

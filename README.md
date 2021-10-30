@@ -2,12 +2,14 @@
 
 A simple, but extendable, json+twig render tool for node.
 
+Let's start off with a fitting quote to keep in mind when writing code:
+
 ```
 "You can't suddenly know something, just by assembling a committee of words."
 ```
 *Hubert J. Farnsworth*
 
-If you wish to know more about why I am making this tool, read my [personal note](#personal-note) or talk to me on twitter *@dasiux*.
+If you wish to know more about why I am making this tool, read my [personal note](#personal-note), if you have questions talk to me on twitter [@dasiux](https://twitter.com/dasiux).
 
 ## Installation
 
@@ -76,13 +78,13 @@ A long option always override the value of a short option if both are used.
 You can use urls in certain parts of the application, this example will render using local templates, but loads its data and fragments from urls. Check the [planned features](#planned-features-bugs-and-fixes) for updates.
  
 ```
-twighouse example dist -c=https://raw.githubusercontent.com/squirrel-forge/node-twighouse/main/example/data/index.json -d=https://raw.githubusercontent.com/squirrel-forge/node-twighouse/main/example/data -f=https://raw.githubusercontent.com/squirrel-forge/node-twighouse/main/example/fragments -m
+twighouse example dist -c=https://raw.githubusercontent.com/squirrel-forge/node-twighouse/main/example/data/index.json -d=https://raw.githubusercontent.com/squirrel-forge/node-twighouse/main/example/data -f=https://raw.githubusercontent.com/squirrel-forge/node-twighouse/main/example/fragments -m -u
 ```
 
 If you wish to use the source argument as an url base you must set the target argument, the template and the plugins option with an absolute path, the *.twighouse* config will be loaded from the current working directory.
 
 ```
-twighouse https://raw.githubusercontent.com/squirrel-forge/node-twighouse/main/example /{...}/dist -p=/{...}/example/plugins -t=/{...}/example/templates -c=data/index.json -m
+twighouse https://raw.githubusercontent.com/squirrel-forge/node-twighouse/main/example /{...}/dist -p=/{...}/example/plugins -t=/{...}/example/templates -c=data/index.json -m -u
 
 ```
 
@@ -102,15 +104,23 @@ Assume following data structure from the example build:
  |    `-- index.json
  |
  +-- [fragments]
- |    | 
+ |    |
  |    |-- footer.json
  |    |-- header.json
  |    |-- meta.json
- |    `-- styles.json
+ |    |-- styles.json
+ |    `-- table-of-contents.json
  |
  +-- [plugin_methods]
  |    |
- |    `-- exampleLoader.js
+ |    |-- exampleData.js
+ |    |-- exampleDirectiveAsync.js
+ |    |-- exampleDirectiveSync.js
+ |    |-- exampleDoc.js
+ |    |-- exampleHTML.js
+ |    |-- exampleLoader.js
+ |    |-- exampleTemplate.js
+ |    `-- exampleTwig.js
  |
  +-- [plugins]
       |
@@ -120,24 +130,26 @@ Assume following data structure from the example build:
 
 ### Special properties
 
-In general you will define what you need, there are only a few special properties that can be used.
-All of these can be set via the *.twighouse* config file options.
+In general, you will define what you need, there are only a few special properties that can be used.
+All of these can be customized via the *.twighouse* [config file options](#configuration-options).
 
 ### Page template
 
- - The *__template* property is described [here](#loading-templates) and must be on the root object.
+The *__template* property is described [here](#loading-templates) and must be on the root object.
+
 ```
 {
   "__template": "{.../}template"
 }
 ```
- - The *document* property gets defined before json processing and is set afterwards and may be modified via the [plugin data](#plugin-data) method. Note that the document data object is supplied to any [directives](#directives) running during processing.
+
+### Minify options
+
+Every page can have custom minify options, only used when minify is enabled. You can find an options reference at the [html-minifier](https://www.npmjs.com/package/html-minifier#options-quick-reference) npm page.
+
 ```
 {
-  path: {string} The page reference, includes a full relativ path and the page slug
-  dir: {string} The relative path of this page
-  slug: {string} The page slug
-  uri: {string} The generated page uri
+   "minify": {...}
 }
 ```
 
@@ -151,37 +163,148 @@ For explicit examples check the example source.
 
 ### Document object
 
-The TwigHouseDocument object has the following properties
+The *document* property gets defined before json processing and is set afterwards and may be modified via the [plugin data](#plugin-data) method, but this might cause errors in structure, do not remove or replace the object. Note that *the document object* is supplied to any [directives](#directives) running during processing.
 
- Name | Type | Description
-------|------|---
- path | str  | Document path relative to root
- dir  | str  | Directory relative to root
- slug | str  | Document name
- uri  | str  | Document uri
+The TwigHouseDocument object has the following properties, they should be treated as read only, but can be modified with unexpected results.
+
+```
+{
+   document: TwigHouseDocument: {
+     source : 'root/path/file',
+     root : 'root/path',
+     slug : 'document-slug',
+     dir : 'relative/to/root',
+     ref : 'dir/slug',
+     uri : 'generated.uri',
+     url : 'generated.url',
+   }
+}
+
+```
 
 The document object is added to every page data object and should not be used in the json source since it will get deleted.
 
 ### Directives
 
-Directives can modify properties and objects in the defined context of your pages json data, directives can be defined via [plugin directives](#plugin-directives) inside a [plugin](#plugins) or the [api](#api-usage) and can be used as following:
+Directives can modify properties and objects in the defined context of your pages json data, directives can be defined via [plugin directives](#plugin-directives) inside a [plugin](#plugins) or the [api](#api-usage). Directive name and argument are separated by colons, the first argument is always the target property. They can be used as following:
 
 ```
 {
-  "__directives": ["directive_method_name:property_to_use:additional_arguments", ...],
+  "__directives": ["directive_method_name:property_to_use:additional_arguments", ...directives],
   "property_to_use": "*",
   ...
 }
 ```
-Directives are always executed in the defined order, which lets you chain them to modify in steps.
+Directives are always executed in the defined order, which lets you chain them to modify values in steps, as can be seen in the demo, first loading the an *.md* file from a path and then converting the files content to html.
 
-#### Available directives
+#### Builtin directives
 
 A list of builtin directives an how they can be used.
 
-##### Directive navItemActive
+#### Directive isDocValue
 
-...
+Compares a property to the [document object](#document-object) and sets a property to *true* if the values are equal, used to set nav items active state for example.
+
+All directive arguments are property names:
+
+Name     | Description
+-------- | ---
+ compare | Property to compare, default: 'uri'
+ prop    | Property to set if equal, default: 'active'
+ value   | Value to set, default: true
+
+Single object:
+
+```
+// Input
+{
+   "__directives": ["isDocValue:uri"],
+   "uri": "/"
+}
+
+// Result, assuming the current document is: index
+{
+   "__directives": ["isDocValue:uri"],
+   "uri": "/",
+   "active": true
+}
+
+```
+
+Array of objects:
+
+```
+// Input
+{
+   "__directives": ["isDocValue:items"],
+   "items": [
+      {"uri": "/docs.html"},
+      {"uri": "/changelog.html"}
+   ]
+}
+
+// Result, assuming the current document is: docs
+{
+   "__directives": ["isDocValue:items"],
+   "items": [
+      {"uri": "/docs.html", "active": true},
+      {"uri": "/changelog.html"}
+   ]
+}
+
+```
+
+#### Directive setFromDoc
+
+Reads a property with a document reference and sets a property with a specified property, used to set uri/url properties for document references inside the source tree.
+
+All directive arguments are property names:
+
+Name  | Description
+----- | ---
+ get  | Property to read document reference from, default: 'uri'
+ set  | Property to set value on, default: {get}
+ type | Document object property value to set, default: {set}
+
+Single object:
+
+```
+// Input
+{
+   "__directives": ["setFromDoc:uri"],
+   "uri": "index",
+}
+
+// Result
+{
+   "__directives": ["setFromDoc:uri"],
+   "uri": "/",
+}
+
+```
+
+Array of objects:
+
+```
+// Input
+{
+   "__directives": ["setFromDoc:items"],
+   "items": [
+      {"uri": "docs"},
+      {"uri": "changelog"}
+   ]
+}
+
+// Result
+{
+   "__directives": ["setFromDoc:items"],
+   "items": [
+      {"uri": "/docs.html"},
+      {"uri": "/changelog.html"}
+   ]
+}
+
+```
 
 ## Templates
 
@@ -235,10 +358,10 @@ A project directory can make use of a *.twighouse* json config file to reduce th
 These can be set via the *.twighouse* json config or with the api from a plugin or your own application.
 
  Name               | Type   | Default        | Description
---------------------|--------|----------------|---
- verbose            | bool   | false          | Run in verbose mode
+------------------- | ------ | ---------------| ---
+ verbose            | bool   | false          | Run in verbose mode (cannot be set via config file)
  strict             | bool   | false          | Run in strict mode
- silent             | bool   | false          | Silent mode will prevent any output and should be used with strict = true
+ silent             | bool   | false          | Silent mode will prevent any output and should be used with strict = true (cannot be set via config file)
  root               | str    | ''             | Source directory, empty is the current working directory
  data               | str    | 'data'         | Data directory, if not absolute it will be attached to the root option
  fragments          | str    | 'fragments'    | Fragments directory,
@@ -270,7 +393,7 @@ You may also set node module names in the usePlugins configuration option to loa
 
 Plugins can be supplied in three ways, class constructors, class instance or plain object.
 
-#### Plugin type: plain object
+#### Plugin type: Plain object
 
 The plain object plugin is the simplest form, a basic structure, for details please refer to the example plugin.
 
@@ -315,7 +438,7 @@ module.exports = {
 
 ```
 
-#### Plugin type: class constructor
+#### Plugin type: Class constructor
 
 The class plugin will use the constructors name as reference, all method, directives, loaders, etc. need to be set in the constructor method via the TwigHouse instance.
 
@@ -340,7 +463,7 @@ module.exports = class Example {
 
 ```
 
-#### Plugin type: class instance
+#### Plugin type: Class instance
 
 The class instance plugin will have the gains of using a class combined with the features of a plain object plugin with automatic assignment.
 
@@ -480,7 +603,7 @@ Directives can be registered the following way, see how to define [directives](#
 Activate a builtin directive, see the [directives](#available-directives) list for available names.
 
 ```
-twigH.useDirective( 'navItemActive' );
+twigH.useDirective( 'isDocValue' );
 
 ```
 
@@ -494,7 +617,7 @@ Registering a custom directive, they can be sync or async functions or may retur
  * @param {Object} parent - Property parent
  * @param {TwigHouseDocument} doc - Document object
  * @param {TwigHouse} twigH - TwigHouse instance
- * @param {...} ...
+ * @param {...} ... - Any additional arguments
  * @return {void}
  */
 function directive( text, key, parent, doc, twigH ) {
@@ -507,7 +630,7 @@ twigH.registerDirective( 'name', directive );
 
 ## Api usage
 
-You can require the TwigHouse class in your node script and run it, change internal options and extend it easily.
+You can require the TwigHouse class in your node script and run it, change internal options and extend it easily, look at the cli implementation and code comments to understand what to run in which order.
 
 ```
 const TwigHouse = require('@squirrel-forge/twighouse');
@@ -528,7 +651,7 @@ I have written a lot of code over the years and one thing that always returned, 
 
 ## Planned features, bugs and fixes
 
-Whenever there is time and space. Bugs and fixes will always get priority above feature requests, as long as the bug is severe and cannot be solved with a workaround. Why is everything open to read and extend? It enables you to do anything you like and yes, break things in the process, but what's the worst that can happen? You understand why, learn something or even help others understand.
+Whenever there is time and space. Bugs and fixes will always get priority above feature requests, as long as the bug is severe and cannot be solved with a simple workaround. Why is everything open to read and extend? It enables you to do anything you like and yes, break things in the process, but what's the worst that can happen? You understand why, learn something or even help others understand, and hopefully make twighouse better.
 
 **Upcoming features** (in no specific order)
  - Remote template loading? is it possible with twig extends and includes etc?

@@ -1,11 +1,11 @@
 {
   "home": {
-    "__directives": ["setFromDoc:uri", "navItemActive:uri"],
+    "__directives": ["setFromDoc:uri", "isDocValue:uri"],
     "uri": "index",
     "label": "@squirrel-forge/twighouse"
   },
   "nav": {
-    "__directives": ["setFromDoc:items", "navItemActive:items"],
+    "__directives": ["setFromDoc:items", "isDocValue:items"],
     "items": [
       {"uri": "docs", "label": "docs"},
       {"uri": "changelog", "label": "changes"},

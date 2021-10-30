@@ -1,0 +1,46 @@
+{
+  "__component": "aside",
+  "content": [
+    "<h3>Overview</h3>",
+    {
+      "__component": "nav",
+      "items": [
+        {"uri": "#installation", "label": "Installation"},
+        {"uri": "#quickstart", "label": "Quickstart","indent": 1},
+        {"uri": "#cli-usage", "label": "cli usage"},
+        {"uri": "#arguments", "label": "Arguments","indent": 1},
+        {"uri": "#options", "label": "Options","indent": 1},
+        {"uri": "#using-url-data", "label": "Using Urls","indent": 1},
+        {"uri": "#json-input", "label": "JSON input"},
+        {"uri": "#special-properties", "label": "Properties","indent": 1},
+        {"uri": "#page-template", "label": "Template","indent": 2},
+        {"uri": "#minify-options", "label": "Minify","indent": 2},
+        {"uri": "#fragments", "label": "Fragments","indent": 2},
+        {"uri": "#document-object", "label": "Document","indent": 2},
+        {"uri": "#directives", "label": "Directives","indent": 1},
+        {"uri": "#builtin-directives", "label": "Builtin","indent": 2},
+        {"uri": "#directive-isdocvalue", "label": "isDocValue","indent": 2},
+        {"uri": "#directive-setfromdoc", "label": "setFromDoc","indent": 2},
+        {"uri": "#templates", "label": "Templates"},
+        {"uri": "#loading-templates", "label": "Loading","indent": 1},
+        {"uri": "#project-config", "label": "Project"},
+        {"uri": "#configuration-options", "label": "Configuration","indent": 1},
+        {"uri": "#plugins", "label": "Plugins"},
+        {"uri": "#plugin-type-plain-object", "label": "Object","indent": 1},
+        {"uri": "#plugin-type-class-constructor", "label": "Class","indent": 1},
+        {"uri": "#plugin-type-class-instance", "label": "Instance","indent": 1},
+        {"uri": "#methods", "label": "Methods","indent": 1},
+        {"uri": "#plugin-twig", "label": "Twig","indent": 2},
+        {"uri": "#plugin-doc", "label": "Document","indent": 2},
+        {"uri": "#plugin-data", "label": "Data","indent": 2},
+        {"uri": "#plugin-template", "label": "Template","indent": 2},
+        {"uri": "#plugin-html", "label": "HTML","indent": 2},
+        {"uri": "#plugin-loader", "label": "Loader","indent": 2},
+        {"uri": "#plugin-directives", "label": "Directives","indent": 2},
+        {"uri": "#api-usage", "label": "Api usage"},
+        {"uri": "#personal-note", "label": "Personal note"},
+        {"uri": "#planned-features-bugs-and-fixes", "label": "Features"}
+      ]
+    }
+  ]
+}

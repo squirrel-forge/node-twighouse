@@ -11,7 +11,19 @@
   "content": [
     {
       "__component": "section",
-      "content": "<h1>@squirrel-forge/twighouse</h1><p>A simple, but extendable, json+twig render tool for node.</p><h2>twig &amp; json</h2><p>This page was generated using a few twig templates and some json files.<br />Check the <a href=\"docs.html\">docs</a> or the <a href=\"https://github.com/squirrel-forge/node-twighouse\">code</a> for more details.</p>"
+      "content": "<h1>@squirrel-forge/twighouse</h1><p>A simple, but extendable, json+twig render tool for node.</p>"
+    },
+    {
+      "__component": "section",
+      "content": "<h2>node, twig &amp; json</h2><p>This page was generated using a few twig templates and some json files.<br />Check the <a href=\"docs.html\">docs</a> or the <a href=\"https://github.com/squirrel-forge/node-twighouse\">code</a> for more details.</p>"
+    },
+    {
+      "__component": "section",
+      "content": "<h3>Feedback and support</h3><p>I will do my best to keep up to date with the <a href=\"docs.html\">docs</a>, if you need help that is not covered and you can't find answers in the <a href=\"https://github.com/squirrel-forge/node-twighouse\">code</a> <em>comments</em> feel free to contact me on twitter <a href=\"https://twitter.com/dasiux\" target=\"_blank\">@dasiux</a>.</p>"
+    },
+    {
+      "__component": "section",
+      "content": "<h3>Issues, feature and plugin requests</h3><p>Whenever there is time and space. Bugs and fixes will always get priority above feature requests, as long as the bug is severe and cannot be solved with a simple workaround. Why is everything open to read and extend? It enables you to do anything you like and yes, break things in the process, but what's the worst that can happen? You understand why, learn something or even help others understand, and hopefully make twighouse better.</p><p><em>dan aka siux</em></p>"
     }
   ],
   "styles": {

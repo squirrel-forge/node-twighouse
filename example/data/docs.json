@@ -10,7 +10,7 @@
     "__fragment": "footer"
   },
   "aside": {
-    "__fragment": "docs/table-of-contents"
+    "__fragment": "table-of-contents"
   },
   "content": [
     {

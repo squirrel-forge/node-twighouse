@@ -79,8 +79,9 @@ class TwigHouse {
      * Constructor
      * @constructor
      * @param {null|console} cfx - Console or alike object
+     * @param {boolean} dev - Development mode, default: false
      */
-    constructor( cfx = null ) {
+    constructor( cfx = null, dev = false ) {
 
         /**
          * Console alike reporting object
@@ -97,6 +98,14 @@ class TwigHouse {
          * @type {string}
          */
         this.VERSION = '0.7.4';
+
+        /**
+         * Development mode
+         * @protected
+         * @property
+         * @type {boolean}
+         */
+        this._dev = dev;
 
         /**
          * Install location
@@ -277,7 +286,7 @@ class TwigHouse {
          * @property
          * @type {string[]}
          */
-        this._builtinDirectives = [ 'setFromDoc', 'navItemActive' ];
+        this._builtinDirectives = [ 'setFromDoc', 'isDocValue' ];
     }
 
     /**
@@ -502,7 +511,19 @@ class TwigHouse {
      * @return {Promise<void>} - Loads and assigns config if available
      */
     async _loadConfig() {
-        const config_path = path.resolve( path.join( isUrl( this._config.root ) ? '' : this._config.root, this._config.__configname ) );
+        let config_path;
+
+        // In dev mode always load config from current cwd
+        if ( this._dev ) {
+            config_path = path.resolve( path.join( process.cwd(), this._config.__configname ) );
+        }
+
+        // Not an absolute path
+        if ( !config_path || config_path[ 0 ] !== path.sep ) {
+
+            // Assumes current cwd if root is an url
+            config_path = path.resolve( path.join( isUrl( this._config.root ) ? '' : this._config.root, this._config.__configname ) );
+        }
         const config_exists = await this.fs.exists( config_path );
         if ( config_exists ) {
             if ( this._config.verbose ) {
@@ -514,16 +535,18 @@ class TwigHouse {
             } catch ( e ) {
                 err = e;
             }
-
             if ( err || !config || typeof config !== 'object' ) {
 
                 // Always fail if invalid object
                 this.error( new TwigHouseException( 'Failed to load config from: ' + config_path, err ), true );
             } else {
 
-                // Disallow verbose and silent option
+                // Disallow options
+                delete config.__configname;
                 delete config.verbose;
                 delete config.silent;
+
+                // Assign leftover values
                 Object.assign( this._config, config );
             }
         } else if ( this._config.verbose ) {

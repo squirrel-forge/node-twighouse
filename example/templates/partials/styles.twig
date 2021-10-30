@@ -139,6 +139,9 @@
     nav li[data-indent] {
         padding-left: 1rem;
     }
+    nav li[data-indent="2"] {
+        padding-left: 2rem;
+    }
     aside nav ul {
         flex-direction: column;
     }
@@ -249,7 +252,7 @@
     td:nth-child(1),
     td:nth-child(2),
     td:nth-child(3) {
-        white-space: nowrap;
+        white-space: pre-wrap;
         text-align: center;
     }
     @media screen and (min-width: 768px) {
