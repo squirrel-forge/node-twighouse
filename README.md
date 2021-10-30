@@ -2,6 +2,13 @@
 
 A simple, but extendable, json+twig render tool for node.
 
+```
+"You can't suddenly know something, just by assembling a committee of words."
+```
+*Hubert J. Farnsworth*
+
+If you wish to know more about why I am making this tool, read my [personal note](#personal-note) or talk to me on twitter *@dasiux*.
+
 ## Installation
 
 ```
@@ -43,6 +50,8 @@ the source argument is omitted and assumed to be the current working directory
 2. target - Path to write compiled html pages
 
 ### Options
+
+A long option always override the value of a short option if both are used.
 
  Short | Long          | Type      | Description
 ------ | ------------- | --------- | ---
@@ -509,14 +518,20 @@ await twigH.write();
 
 Now that you have reached the end, explore the code comments. if that does not help, please open an issue if you can't find an answer to your question, the squirrel will be glad to help.
 
+## Personal note
+
+I have written a lot of code over the years and one thing that always returned, was the problem to quickly wip up some html, sure you can use all sorts of setups, but they all require some large framework, a complex environment and a lot of work setting everything up. Well I wanted something fast and be able to re-use things without needing to copy-paste and merge updates in loads of files over and over again. I have made a similar alot simpler tool with php that served me well over the years, but I decided it was time for a fresh approach, hence the switch to node and twig templates. I want to use this tool to build simple sites and make static mockups where the resulting code can be re-used if need be. I enjoy writing useful code and I wanted to share, that somebody else might find it useful also. Feedback, issues and feature requests are welcome, but the latter should focus on the scope of the tool. Although I'd be glad, for now, to help with your own plugin to supply features that do not fit the scope.
+
+*dan aka siux*
+
 ## Planned features, bugs and fixes
 
 Whenever there is time and space. Bugs and fixes will always get priority above feature requests, as long as the bug is severe and cannot be solved with a workaround. Why is everything open to read and extend? It enables you to do anything you like and yes, break things in the process, but what's the worst that can happen? You understand why, learn something or even help others understand.
 
 **Upcoming features** (in no specific order)
- - Remote template loading? is it possible with twig?
- - Better document object
- - Builtin usable directives
+ - Remote template loading? is it possible with twig extends and includes etc?
+ - More document properties?
+ - More builtin usable directives
  - Some useful twig extensions
  - Add memory clear method for api use with options for page data, fragments, templates and last render state
 
