@@ -1,5 +1,5 @@
 {
   "strict": true,
-  "docDomain": "https://squirrel-forge.github.io",
-  "docRoot": "/node-twighouse/"
+  "docDomain": "",
+  "docRoot": "/"
 }
