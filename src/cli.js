@@ -154,7 +154,7 @@ module.exports = async function cli() {
     } );
 
     // Get answers to twighouse config
-    if ( options.ask ) {
+    if ( !options.example && options.ask ) {
         const answers = await input.ask( {
             verbose : { question : 'Run in verbose mode? (yes/no)', is_bool : true },
             data : { question : 'Data directory? (path, uri or url)' },
