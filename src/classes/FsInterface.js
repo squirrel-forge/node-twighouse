@@ -193,13 +193,13 @@ class FsInterface {
     }
 
     /**
-     * Get relative path
+     * Get relative to root path
      * @public
      * @param {string} dir - Source path
      * @param {string} root - Included root path
      * @return {string} - Path relative to root
      */
-    relPath( dir, root ) {
+    relative2root( dir, root ) {
         let rel_dir = dir.substr( root.length );
         if ( rel_dir.length && rel_dir[ 0 ] === path.sep ) {
             rel_dir = rel_dir.substr( 1 );

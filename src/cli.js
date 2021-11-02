@@ -28,7 +28,7 @@ function setFromInteractive( config, answers ) {
 
 /**
  * TwigHouse cli application
- * @return {void}
+ * @return {Promise<void>} - Possibly throws errors in strict mode
  */
 module.exports = async function cli() {
 

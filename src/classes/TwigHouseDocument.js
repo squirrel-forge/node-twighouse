@@ -76,7 +76,7 @@ class TwigHouseDocument {
          * @property
          * @type {string}
          */
-        this.dir = twigH.fs.relPath( dir, this.root );
+        this.dir = twigH.fs.relative2root( dir, this.root );
 
         /**
          * Document reference
