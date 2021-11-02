@@ -5,7 +5,8 @@ A simple, but extendable, json+twig render tool for node.
 Let's start off with a fitting quote to keep in mind when writing code:
 
 ```
-"You can't suddenly know something, just by assembling a committee of words."
+"You can't suddenly know something,
+ just by assembling a committee of words."
 ```
 *Hubert J. Farnsworth*
 
@@ -20,8 +21,8 @@ npm i @squirrel-forge/twighouse -g
 ### Quickstart
 
 To see a working example run following commands inside an empty directory.
-The example uses directives and the showdown module to render this README.md to html.
-For the example you must install showdown yourself, it is neither needed nor required for twighouse itself.
+The example uses directives and the showdown module, included as dev dependency, to render this README.md to html.
+To use the example you must install showdown yourself, it is neither needed nor required for twighouse itself.
 ```
 npm i showdown@1.9.1
 ```
@@ -31,6 +32,7 @@ twighouse example -x
 twighouse example dist
 ```
 You will find the compiled files inside the dist directory and the example source data inside the example directory.
+The example is alot more complex than what you might need, it tries to illustrate possibilities, if you feel there is something missing please submit a feature request an I will look into it.
 
 ## cli usage
 
@@ -91,7 +93,7 @@ twighouse https://raw.githubusercontent.com/squirrel-forge/node-twighouse/main/e
 ## JSON input
 
 The individual pages json is loaded from the *{source}/data/* directory, this directory is read recursivly by default.
-The [fragments](#fragments) are loaded at runtime by reference in your json files and any js files in the [plugins](#plugins) directory are executed right before the page sources are loaded.
+The loaded json is not just json, it does some things if certain [special properties](#special-properties) are present, for example [fragments](#fragments) are loaded at runtime by reference in your json files and can extend your json with shared data but also allow you to override values from that shared json object. You may also place [directives](#directives) inside your json to process specific property values and rewrite them given the value and an optional set of arguments. A [plugin](#plugins) can register a few methods to implement your own needs, for example to modify the resolved json object.
 
 Assume following data structure from the example build:
 ```
@@ -104,27 +106,12 @@ Assume following data structure from the example build:
  |    `-- index.json
  |
  +-- [fragments]
- |    |
- |    |-- footer.json
- |    |-- header.json
- |    |-- meta.json
- |    |-- styles.json
- |    `-- table-of-contents.json
- |
- +-- [plugin_methods]
- |    |
- |    |-- exampleData.js
- |    |-- exampleDirectiveAsync.js
- |    |-- exampleDirectiveSync.js
- |    |-- exampleDoc.js
- |    |-- exampleHTML.js
- |    |-- exampleLoader.js
- |    |-- exampleTemplate.js
- |    `-- exampleTwig.js
- |
- +-- [plugins]
       |
-      `-- example.js
+      |-- footer.json
+      |-- header.json
+      |-- meta.json
+      |-- styles.json
+      `-- table-of-contents.json
 
 ```
 
@@ -145,7 +132,7 @@ The *__template* property is described [here](#loading-templates) and must be on
 
 ### Minify options
 
-Every page can have custom minify options, only used when minify is enabled. You can find an options reference at the [html-minifier](https://www.npmjs.com/package/html-minifier#options-quick-reference) npm page.
+Every page can have custom minify options, only used when minify is enabled. The options replace the defaults options, they do not extend. You can find an options reference at the [html-minifier](https://www.npmjs.com/package/html-minifier#options-quick-reference) npm page.
 
 ```
 {
@@ -155,17 +142,17 @@ Every page can have custom minify options, only used when minify is enabled. You
 
 ### Fragments
 
-Fragments work similar to fragements in graphql, though here we require valid json syntax, to include a fragment supply the relative path *string* to the object as property *__fragment* that should receive the fragments properties. Any properties already set will *not be overridden* by the fragment, consider the fragment to be the default data, there can be only one fragment defined per object, but a fragment itself may have a fragment defined in its root which will be processed recursivly.
+Fragments work similar to fragements in graphql, though here we require valid json syntax, to include a fragment supply the relative path *string* to the object as property *__fragment* that should receive the fragments properties. Any properties already set will *not be overridden* by the fragment, consider the fragment to be the default data, there can be only one fragment defined per object, but a fragment itself may have a fragment defined in its root which will be processed recursivly, there is currently no check in place to prevent circular references.
 
 ```{"__fragment": "{.../}fragment", ...overrides}```
 
-For explicit examples check the example source.
+For explicit examples check the example source, they may look dangerous, but they are actually very simple to use.
 
 ### Document object
 
 The *document* property gets defined before json processing and is set afterwards and may be modified via the [plugin data](#plugin-data) method, but this might cause errors in structure, do not remove or replace the object. Note that *the document object* is supplied to any [directives](#directives) running during processing.
 
-The TwigHouseDocument object has the following properties, they should be treated as read only, but can be modified with unexpected results.
+The TwigHouseDocument object has the following properties, they should be treated as read only, but can be modified with possibly unexpected results via a [plugins document method](#plugin-doc).
 
 ```
 {
@@ -182,11 +169,12 @@ The TwigHouseDocument object has the following properties, they should be treate
 
 ```
 
-The document object is added to every page data object and should not be used in the json source since it will get deleted.
+The document object is added to every page data object and should not be used in the json source since it will get replaced once the load is completed.
 
 ### Directives
 
-Directives can modify properties and objects in the defined context of your pages json data, directives can be defined via [plugin directives](#plugin-directives) inside a [plugin](#plugins) or the [api](#api-usage). Directive name and argument are separated by colons, the first argument is always the target property. They can be used as following:
+Directives can modify properties and objects in the defined context of your pages json data, directives can be defined via [plugin directives](#plugin-directives) method inside a [plugin](#plugins). Directive name and argument are separated by colons, the first argument is always the target property. Any further arguments depend on the directive, see the list of [builtin directives](#builtin-directives).
+They can be used as following:
 
 ```
 {
@@ -195,7 +183,7 @@ Directives can modify properties and objects in the defined context of your page
   ...
 }
 ```
-Directives are always executed in the defined order, which lets you chain them to modify values in steps, as can be seen in the demo, first loading the an *.md* file from a path and then converting the files content to html.
+Directives are always executed in the defined order, which lets you chain them to modify values in steps, as can be seen in the demo, first loading the *.md* file from a path and then converting the files content to html with a second directive.
 
 #### Builtin directives
 
@@ -308,7 +296,7 @@ Array of objects:
 
 ## Templates
 
-The templates structure is all yours, following the default loading pattern, which can be modified via the [plugin template](#plugin-template) method with a [plugin](#plugins) to load whatever you like.
+The templates structure is all yours, following the default [loading pattern](#loading-templates), which can be modified via the [plugin template](#plugin-template) method with a [plugin](#plugins) to load whatever you like.
 
 Following the example structure:
 ```
@@ -379,15 +367,36 @@ These can be set via the *.twighouse* json config or with the api from a plugin 
  templateExt        | str    | '.twig'        | Template file extension
  templateProperty   | str    | '__template'   | Template property to use on page data
  usePlugins         | Array  | []             | Plugin module names or paths to load
- pluginExt          | str    | 'js'           | Plugin file extension
+ pluginExt          | str    | 'js'           | Plugin file extension, currently no options implemented
  minify             | bool   | false          | Minify document output
  minifyProperty     | str    | '__minify'     | Minify options property to use on page data
- minifyOptions      | Object | { removeComments : true, collapseWhitespace : true, minifyJS : true, minifyCSS : true } | Minify plugin options
+ minifyOptions      | Object | { removeComments : true, collapseWhitespace : true, minifyJS : true, minifyCSS : true } | Minify plugin default options
 
 ## Plugins
 
 Plugins can be loaded from local files in the plugins directory or be node modules, plugins cannot be loaded by remote for security reasons. Custom plugins can be placed in the plugins directory where they will be autoloaded or any other directory accessible in your filesystem using a relative path with the usePlugins configuration option in your project config.
-You may also set node module names in the usePlugins configuration option to load a plugin from an installable node module. 
+You may also set node module names in the usePlugins configuration option to load a plugin from an installable node module.
+
+Assume following data structure from the example build:
+```
+[example]
+ |
+ +-- [plugin_methods]
+ |    |
+ |    |-- exampleData.js
+ |    |-- exampleDirectiveAsync.js
+ |    |-- exampleDirectiveSync.js
+ |    |-- exampleDoc.js
+ |    |-- exampleHTML.js
+ |    |-- exampleLoader.js
+ |    |-- exampleTemplate.js
+ |    `-- exampleTwig.js
+ |
+ +-- [plugins]
+      |
+      `-- example.js
+
+```
 
 ### Plugin types
 
@@ -635,10 +644,6 @@ You can require the TwigHouse class in your node script and run it, change inter
 ```
 const TwigHouse = require('@squirrel-forge/twighouse');
 const twigH = new TwigHouse( console );
-await twigH.init();
-await twigH.load();
-await twigH.render();
-await twigH.write();
 ```
 
 Now that you have reached the end, explore the code comments. if that does not help, please open an issue if you can't find an answer to your question, the squirrel will be glad to help.
@@ -654,10 +659,11 @@ I have written a lot of code over the years and one thing that always returned, 
 Whenever there is time and space. Bugs and fixes will always get priority above feature requests, as long as the bug is severe and cannot be solved with a simple workaround. Why is everything open to read and extend? It enables you to do anything you like and yes, break things in the process, but what's the worst that can happen? You understand why, learn something or even help others understand, and hopefully make twighouse better.
 
 **Upcoming features** (in no specific order)
+ - Add fragment loading circular recursion check and graceful error.
  - Remote template loading? is it possible with twig extends and includes etc?
  - More document properties?
- - More builtin usable directives
- - Some useful twig extensions
+ - More builtin usable directives? ideas?
+ - Some useful twig extensions? ideas?
  - Add memory clear method for api use with options for page data, fragments, templates and last render state
 
 **A note on the side:** TwigHouse will *probably never* implement any sass, javascript or similar compile features, since it is meant for templating and does not want solve problems that belong elsewhere.
