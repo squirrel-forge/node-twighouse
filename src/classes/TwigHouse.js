@@ -97,7 +97,7 @@ class TwigHouse {
          * @property
          * @type {string}
          */
-        this.VERSION = '0.7.4';
+        this.VERSION = '0.8.4';
 
         /**
          * Development mode
