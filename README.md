@@ -7,6 +7,7 @@ Let's start off with a fitting quote to keep in mind when writing code:
 ```
 "You can't suddenly know something,
  just by assembling a committee of words."
+
 ```
 *Hubert J. Farnsworth*
 
@@ -16,6 +17,7 @@ If you wish to know more about why I am making this tool, read my [personal note
 
 ```
 npm i @squirrel-forge/twighouse -g
+
 ```
 
 ### Quickstart
@@ -25,11 +27,14 @@ The example uses directives and the showdown module, included as dev dependency,
 To use the example you must install showdown yourself, it is neither needed nor required for twighouse itself.
 ```
 npm i showdown@1.9.1
+
 ```
+
 Then run the commands to deploy the example and render it. 
 ```
 twighouse example -x
 twighouse example dist
+
 ```
 You will find the compiled files inside the dist directory and the example source data inside the example directory.
 The example is alot more complex than what you might need, it tries to illustrate possibilities, if you feel there is something missing please submit a feature request an I will look into it.
@@ -39,6 +44,7 @@ The example is alot more complex than what you might need, it tries to illustrat
 ```
 twighouse target --boolean --path=../dir --str=about --str=index,about
 twighouse source target --boolean --path=../dir --str=about --str=index,about
+
 ```
 
 ### Arguments
@@ -81,6 +87,7 @@ You can use urls in certain parts of the application, this example will render u
  
 ```
 twighouse example dist -c=https://raw.githubusercontent.com/squirrel-forge/node-twighouse/main/example/data/index.json -d=https://raw.githubusercontent.com/squirrel-forge/node-twighouse/main/example/data -f=https://raw.githubusercontent.com/squirrel-forge/node-twighouse/main/example/fragments -m -u
+
 ```
 
 If you wish to use the source argument as an url base you must set the target argument, the template and the plugins option with an absolute path, the *.twighouse* config will be loaded from the current working directory.
@@ -128,6 +135,7 @@ The *__template* property is described [here](#loading-templates) and must be on
 {
   "__template": "{.../}template"
 }
+
 ```
 
 ### Minify options
@@ -138,13 +146,20 @@ Every page can have custom minify options, only used when minify is enabled. The
 {
    "minify": {...}
 }
+
 ```
 
 ### Fragments
 
 Fragments work similar to fragements in graphql, though here we require valid json syntax, to include a fragment supply the relative path *string* to the object as property *__fragment* that should receive the fragments properties. Any properties already set will *not be overridden* by the fragment, consider the fragment to be the default data, there can be only one fragment defined per object, but a fragment itself may have a fragment defined in its root which will be processed recursivly, there is currently no check in place to prevent circular references.
 
-```{"__fragment": "{.../}fragment", ...overrides}```
+```
+{
+   "__fragment": "{.../}fragment",
+   ...overrides
+}
+
+```
 
 For explicit examples check the example source, they may look dangerous, but they are actually very simple to use.
 
@@ -182,6 +197,7 @@ They can be used as following:
   "property_to_use": "*",
   ...
 }
+
 ```
 Directives are always executed in the defined order, which lets you chain them to modify values in steps, as can be seen in the demo, first loading the *.md* file from a path and then converting the files content to html with a second directive.
 
@@ -323,6 +339,7 @@ Following the example structure:
       |    `-- styles.twig
       |
       `-- __page.twig
+
 ```
 
 ### Loading templates
@@ -603,6 +620,7 @@ function loader( url, limit, data, twigH ) {
     // Use this to implement your own reference loading logic
     // Check the example loader for implementation details.
 };
+
 ```
 
 ### Plugin directives
@@ -639,11 +657,13 @@ twigH.registerDirective( 'name', directive );
 
 ## Api usage
 
-You can require the TwigHouse class in your node script and run it, change internal options and extend it easily, look at the cli implementation and code comments to understand what to run in which order.
+You can require the TwigHouse class in your node script and run it, change internal options and extend it easily, look at the cli implementation and code comments to understand what to run in which order, currently there will be no extended documentation on the js api, since code comments should be sufficient to understand what works in which way.
 
 ```
+const cfx = require('@squirrel-forge/node-cfx').cfx;
 const TwigHouse = require('@squirrel-forge/twighouse');
-const twigH = new TwigHouse( console );
+const twigH = new TwigHouse( cfx );
+
 ```
 
 Now that you have reached the end, explore the code comments. if that does not help, please open an issue if you can't find an answer to your question, the squirrel will be glad to help.
