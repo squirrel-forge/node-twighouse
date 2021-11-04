@@ -883,23 +883,34 @@ class TwigHouse {
      * @param {Array|Object} source - JSON source
      * @param {Array|Object} compiled - Target reference
      * @param {TwigHouseDocument} doc - Document object
+     * @param {Array<string>} recursion - Fragment recursion references
      * @throws {Exception}
      * @return {Promise<void>} - Possibly throws errors in strict mode
      */
-    async resolvePageJsonTree( source, compiled, doc ) {
+    async resolvePageJsonTree( source, compiled, doc, recursion = [] ) {
         const is_array = source instanceof Array;
         if ( is_array || isPojo( source ) ) {
+            const frp = this._config.fragmentProperty;
 
-            // If we are resolving fragments and its an object were looking at
-            if ( this._config.resolveFragments && !is_array && source[ this._config.fragmentProperty ] ) {
-                const fragment = await this._resolveFragment( source[ this._config.fragmentProperty ] );
+            // If we are resolving fragments and its an object were looking at that has a fragment property
+            if ( this._config.resolveFragments && !is_array && source[ frp ] ) {
+                const fragment = await this._resolveFragment( source[ frp ] );
                 if ( fragment ) {
-                    await this.resolvePageJsonTree( fragment, compiled, doc );
+
+                    // Since we could load the fragment we need to check for recursion
+                    if ( recursion.length && recursion.includes( source[ frp ] ) ) {
+                        this.error( new TwigHouseException( 'JSON fragment circular reference detected: '
+                            + recursion.join( ' > ' ) + ' > ' + source[ frp ] ), true );
+                    }
+
+                    // Add the fragment reference to the recursion check and resolve it
+                    recursion.push( source[ frp ] );
+                    await this.resolvePageJsonTree( fragment, compiled, doc, recursion );
                 } else {
 
                     // Set an error array on the current object
                     compiled.__error = compiled.__error || [];
-                    compiled.__error.push( 'Failed to resolve fragment: ' + source[ this._config.fragmentProperty ] );
+                    compiled.__error.push( 'Failed to resolve fragment: ' + source[ frp ] );
 
                     // Silence, notify or throw in strict mode
                     this.error( new TwigHouseException( compiled.__error[ compiled.__error.length - 1 ] ) );
@@ -912,7 +923,7 @@ class TwigHouse {
                     compiled[ key ] = [];
                 } else if ( isPojo( value ) ) {
                     compiled[ key ] = {};
-                } else if ( key === this._config.fragmentProperty && compiled[ key ] ) {
+                } else if ( key === frp && compiled[ key ] ) {
                     if ( !( compiled[ key ] instanceof Array ) ) {
                         compiled[ key ] = [ compiled[ key ] ];
                     }

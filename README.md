@@ -679,7 +679,6 @@ I have written a lot of code over the years and one thing that always returned, 
 Whenever there is time and space. Bugs and fixes will always get priority above feature requests, as long as the bug is severe and cannot be solved with a simple workaround. Why is everything open to read and extend? It enables you to do anything you like and yes, break things in the process, but what's the worst that can happen? You understand why, learn something or even help others understand, and hopefully make twighouse better.
 
 **Upcoming features** (in no specific order)
- - Add fragment loading circular recursion check and graceful error.
  - Remote template loading? is it possible with twig extends and includes etc?
  - More document properties?
  - More builtin usable directives? ideas?
