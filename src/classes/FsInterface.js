@@ -197,14 +197,22 @@ class FsInterface {
      * @public
      * @param {string} dir - Source path
      * @param {string} root - Included root path
+     * @throws {FsInterfaceException}
      * @return {string} - Path relative to root
      */
     relative2root( dir, root ) {
-        let rel_dir = dir.substr( root.length );
-        if ( rel_dir.length && rel_dir[ 0 ] === path.sep ) {
-            rel_dir = rel_dir.substr( 1 );
+
+        // Directory must be a descendant of root
+        if ( dir.substr( 0, root.length ) !== root ) {
+            throw new FsInterfaceException( 'Path "' + dir + '" must be nested in root: ' + root );
         }
-        return rel_dir;
+        const rel = dir.substr( root.length );
+
+        // Need to remove the absolute path slash
+        if ( rel.length && rel[ 0 ] === path.sep ) {
+            return rel.substr( 1 );
+        }
+        return rel;
     }
 
     /**
