@@ -8,6 +8,7 @@ const TwigHouseDocument = require( './TwigHouseDocument' );
 const FsInterface = require( './FsInterface' );
 const Plugins = require( './Plugins' );
 const Exception = require( './Exception' );
+const Warning = require( './Warning' );
 const isUrl = require( '../fn/isUrl' );
 const isPojo = require( '../fn/isPojo' );
 
@@ -66,7 +67,7 @@ class TwigHouseException extends Exception {}
  * TwigHouse warning
  * @class
  */
-class TwigHouseWarning extends Exception {}
+class TwigHouseWarning extends Warning {}
 
 /**
  * TwigHouse class
