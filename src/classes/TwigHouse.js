@@ -291,6 +291,23 @@ class TwigHouse {
     }
 
     /**
+     * Clear cache
+     * @param {boolean} docs - Clear docs
+     * @param {boolean} data - Clear data, also clears directive stats
+     * @param {boolean} fragments - Clear fragments
+     * @param {boolean} rendered - Clear rendered
+     * @param {boolean} stats - Clear stats
+     * @return {void}
+     */
+    clear( { docs = true, data = true, fragments = true, rendered = true, stats = true } = {} ) {
+        if ( docs ) this._docs = {};
+        if ( data ) this._data = {};
+        if ( fragments ) this._fragments = {};
+        if ( rendered ) this._rendered = {};
+        if ( data || stats ) this.directiveStats = {};
+    }
+
+    /**
      * Parse exception for output
      * @protected
      * @param {string|Error|Exception} msg - Message or exception instance

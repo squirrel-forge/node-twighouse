@@ -683,6 +683,5 @@ Whenever there is time and space. Bugs and fixes will always get priority above 
  - More document properties?
  - More builtin usable directives? ideas?
  - Some useful twig extensions? ideas?
- - Add memory clear method for api use with options for page data, fragments, templates and last render state
 
 **A note on the side:** TwigHouse will *probably never* implement any sass, javascript or similar compile features, since it is meant for templating and does not want solve problems that belong elsewhere.
