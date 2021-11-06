@@ -7,6 +7,7 @@ const cfx = require( '@squirrel-forge/node-cfx' ).cfx;
 const TwigHouse = require( './classes/TwigHouse' );
 const CliInput = require( './classes/CliInput' );
 const isUrl = require( './fn/isUrl' );
+const TwigHouseDocument = require( './classes/TwigHouseDocument' );
 
 /**
  * Set config values from interactive answers
@@ -334,7 +335,12 @@ module.exports = async function cli() {
             }
 
             // All we want is to show as output
-            cfx.log( JSON.stringify( twigH._data, null, 2 ) );
+            cfx.log( JSON.stringify( twigH._data, ( k, v ) => {
+                if ( !twigH._config.verbose && k.substr( 0, 2 ) === '__' ) {
+                    return;
+                }
+                return v instanceof TwigHouseDocument ? v.toObject( twigH._config.verbose ) : v;
+            }, 2 ) );
             if ( !config.silent && this.verbose ) {
                 cfx.success( 'Total pages: ' + Object.keys( twigH._data ).length );
             }
