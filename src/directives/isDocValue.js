@@ -6,7 +6,7 @@
  * @param {TwigHouseDocument} doc - Document object
  * @param {TwigHouse} twigH - TwigHouse instance
  * @param {string} compare - Property name to compare, default: 'uri'
- * @param {string} prop - Property name to set, default: 'active'
+ * @param {string} write - Property name to set, default: 'active'
  * @param {string} value - Value to set, default: true
  * @return {void}
  */
@@ -17,19 +17,16 @@ module.exports = function isDocValue(
     doc,
     twigH,
     compare = 'uri',
-    prop = 'active',
+    write = 'active',
     value = true,
 ) {
-    compare = compare || 'uri';
-    prop = prop || 'active';
-    value = value || true;
     if ( items instanceof Array ) {
         for ( let i = 0; i < items.length; i++ ) {
             if ( items[ i ][ compare ] === doc[ compare ] ) {
-                items[ i ][ prop ] = value;
+                items[ i ][ write ] = value;
             }
         }
     } else if ( items === doc[ compare ] ) {
-        parent[ prop ] = value;
+        parent[ write ] = value;
     }
 };

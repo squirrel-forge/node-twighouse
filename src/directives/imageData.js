@@ -23,11 +23,16 @@ try {
  * @return {string|{src:string,width:string,height:string}} - Image object
  */
 function getImageObject( src, root, doc, twigH ) {
+    let o = {};
     if ( !sizeOf ) {
-        twigH.warn( new twigH.constructor.TwigHouseWarning( 'Directive imageData requires optional module: image-size ^1.0.0' ) );
-        return src;
+        twigH.warn( new twigH.constructor.TwigHouseWarning( 'Directive imageData uses optional module: image-size ^1.0.0' ) );
+        o.type = path.parse( src ).ext;
+        if ( o.type[ 0 ] === '.' ) {
+            o.type = o.type.substr( 1 );
+        }
+    } else {
+        o = sizeOf( path.join( twigH.getPath(), src ) );
     }
-    const o = sizeOf( path.join( twigH.getPath(), src ) );
     o.src = src;
     o.uri = doc.constructor.getUriFrom( src, root, twigH );
     o.url = doc.constructor.getUrlFrom( src, root, twigH );
@@ -41,7 +46,8 @@ function getImageObject( src, root, doc, twigH ) {
  * @param {Object} parent - Item parent
  * @param {TwigHouseDocument} doc - Document object
  * @param {TwigHouse} twigH - TwigHouse instance
- * @param {string} prop - Property to read and write, default: 'image'
+ * @param {string} read - Property to read for arrays: 'image'
+ * @param {string} write - Property to write, default: null
  * @param {string} root - Optional root
  * @return {void}
  */
@@ -51,17 +57,21 @@ module.exports = function imageData(
     parent,
     doc,
     twigH,
-    prop = 'image',
+    read = null,
+    write = null,
     root = '',
 ) {
     if ( items instanceof Array ) {
+        read = read || 'image';
+        write = write || read;
         for ( let i = 0; i < items.length; i++ ) {
-            const v = items[ i ][ prop ];
+            const v = items[ i ][ read ];
             if ( typeof v === 'string' && v.length ) {
-                items[ i ][ prop ] = getImageObject( v, root, doc, twigH );
+                items[ i ][ write ] = getImageObject( v, root, doc, twigH );
             }
         }
     } else if ( typeof items === 'string' && items.length ) {
-        parent[ key ] = getImageObject( items, root, doc, twigH );
+        write = write || read || key;
+        parent[ write ] = getImageObject( items, root, doc, twigH );
     }
 };

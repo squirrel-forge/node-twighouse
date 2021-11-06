@@ -214,7 +214,7 @@ All directive arguments are property names:
 Name     | Description
 -------- | ---
  compare | Property to compare, default: 'uri'
- prop    | Property to set if equal, default: 'active'
+ write   | Property to set if equal, default: 'active'
  value   | Value to set, default: true
 
 Single object:
@@ -228,7 +228,6 @@ Single object:
 
 // Result, assuming the current document is: index
 {
-   "__directives": ["isDocValue:uri"],
    "uri": "/",
    "active": true
 }
@@ -249,7 +248,6 @@ Array of objects:
 
 // Result, assuming the current document is: docs
 {
-   "__directives": ["isDocValue:items"],
    "items": [
       {"uri": "/docs.html", "active": true},
       {"uri": "/changelog.html"}
@@ -260,15 +258,15 @@ Array of objects:
 
 #### Directive setFromDoc
 
-Reads a property with a document reference and sets a property with a specified property, used to set uri/url properties for document references inside the source tree.
+Reads a property with a document reference and sets a property with a specified name, used to set uri/url properties for document references inside the source tree.
 
 All directive arguments are property names:
 
-Name  | Description
------ | ---
- get  | Property to read document reference from, default: 'uri'
- set  | Property to set value on, default: {get}
- type | Document object property value to set, default: {set}
+Name    | Description
+------- | ---
+ read   | Property to read document reference from, default: {read/'uri'}
+ write  | Property to set value on, default: {read/'uri'}
+ type   | Document object property value to set, default: {write}
 
 Single object:
 
@@ -281,7 +279,6 @@ Single object:
 
 // Result
 {
-   "__directives": ["setFromDoc:uri"],
    "uri": "/",
 }
 
@@ -301,10 +298,67 @@ Array of objects:
 
 // Result
 {
-   "__directives": ["setFromDoc:items"],
    "items": [
       {"uri": "/docs.html"},
       {"uri": "/changelog.html"}
+   ]
+}
+
+```
+
+#### Directive imageData
+
+Reads a property with a image path and sets a property with a specified name with extended image data such as sizes and uri/url.
+This directive requires and optional dependency of [image-size](https://www.npmjs.com/package/image-size)
+
+All directive arguments are property names:
+
+Name  | Description
+----- | ---
+ read  | Property to read image path from, default: {read/'image'}
+ write | Property to write data to, default: {read/'image'}
+ root  | Optional image relative root, default: ''
+
+Single object:
+
+```
+// Input
+{
+   "__directives": ["imageData:image"],
+   "image": "img/foo.jpg",
+}
+
+// Result
+{
+   "image": {
+      "height": 1080,
+      "width": 640,
+      "type": "jpg",
+      "src": "img/foo.jpg",
+      "uri": "/img/foo.jpg",
+      "url": "http://.../img/foo.jpg"
+   },
+}
+
+```
+
+Array of objects:
+
+```
+// Input
+{
+   "__directives": ["imageData:items"],
+   "items": [
+      {"image": "img/foo.jpg"},
+      {"image": "img/picture.jpg"}
+   ]
+}
+
+// Result
+{
+   "items": [
+      {"image": {...}},
+      {"image": {...}}
    ]
 }
 
@@ -362,32 +416,35 @@ A project directory can make use of a *.twighouse* json config file to reduce th
 
 These can be set via the *.twighouse* json config or with the api from a plugin or your own application.
 
- Name               | Type   | Default        | Description
-------------------- | ------ | ---------------| ---
- verbose            | bool   | false          | Run in verbose mode (cannot be set via config file)
- strict             | bool   | false          | Run in strict mode
- silent             | bool   | false          | Silent mode will prevent any output and should be used with strict = true (cannot be set via config file)
- root               | str    | ''             | Source directory, empty is the current working directory
- data               | str    | 'data'         | Data directory, if not absolute it will be attached to the root option
- fragments          | str    | 'fragments'    | Fragments directory,
- plugins            | str    | 'plugins'      | Plugins directory,
- templates          | str    | 'templates'    | Templates directory,
- target             | str    | 'dist'         | Target directory, *note that when using the cli tool target default is:* **''**
- resolveFragments   | bool   | true           | Resolve fragments
- fragmentProperty   | str    | '__fragment'   | Fragment property name to load from
- useDirectives      | Array  | []             | Builtin directives to use, can be set to 'all':string to use all builtins
- processDirectives  | bool   | true           | Process directives while parsing json 
- ignoreDirectives   | bool   | true           | Ignore directives that are not defined
- directivesProperty | str    | '__directives' | Directives property name to execute from
- directivePrefix    | str    | 'directive_'   | Directive method prefix
- defaultTemplate    | str    | '__page'       | Default template
- templateExt        | str    | '.twig'        | Template file extension
- templateProperty   | str    | '__template'   | Template property to use on page data
- usePlugins         | Array  | []             | Plugin module names or paths to load
- pluginExt          | str    | 'js'           | Plugin file extension, currently no options implemented
- minify             | bool   | false          | Minify document output
- minifyProperty     | str    | '__minify'     | Minify options property to use on page data
- minifyOptions      | Object | { removeComments : true, collapseWhitespace : true, minifyJS : true, minifyCSS : true } | Minify plugin default options
+ Name               | Type     | Default        | Description
+------------------- | -------- | ---------------| ---
+ verbose            | bool     | false          | Run in verbose mode (cannot be set via config file)
+ strict             | bool     | false          | Run in strict mode
+ silent             | bool     | false          | Silent mode will prevent any output and should be used with strict = true (cannot be set via config file)
+ root               | str      | ''             | Source directory, empty is the current working directory
+ data               | str      | 'data'         | Data directory, if not absolute it will be attached to the root option
+ fragments          | str      | 'fragments'    | Fragments directory,
+ plugins            | str      | 'plugins'      | Plugins directory,
+ templates          | str      | 'templates'    | Templates directory,
+ target             | str      | 'dist'         | Target directory, *note that when using the cli tool target default is:* **''**
+ resolveFragments   | bool     | true           | Resolve fragments
+ fragmentProperty   | str      | '__fragment'   | Fragment property name to load from
+ useDirectives      | Array    | []             | Builtin directives to use, can be set to 'all':string to use all builtins
+ processDirectives  | bool     | true           | Process directives while parsing json 
+ ignoreDirectives   | bool     | true           | Ignore directives that are not defined
+ directivesProperty | str      | '__directives' | Directives property name to execute from
+ directivePrefix    | str      | 'directive_'   | Directive method prefix
+ defaultTemplate    | str      | '__page'       | Default template
+ templateExt        | str      | '.twig'        | Template file extension
+ templateProperty   | str      | '__template'   | Template property to use on page data
+ usePlugins         | Array    | []             | Plugin module names or paths to load
+ pluginExt          | str      | 'js'           | Plugin file extension, currently no options implemented
+ jsonHideTypes      | Array    | null           | Hide type and functional data on write
+ jsonDiscardProps   | Array    | ['internals']  | Hide specific prop names on write
+ jsonReplacer       | Function | null           | JSON replacer function (can only be set via the api)
+ minify             | bool     | false          | Minify document output
+ minifyProperty     | str      | '__minify'     | Minify options property to use on page data
+ minifyOptions      | Object   | { removeComments : true, collapseWhitespace : true, minifyJS : true, minifyCSS : true } | Minify plugin default options
 
 ## Plugins
 

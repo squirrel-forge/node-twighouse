@@ -21,6 +21,7 @@
         {"uri": "#builtin-directives", "label": "Builtin","indent": 2},
         {"uri": "#directive-isdocvalue", "label": "isDocValue","indent": 2},
         {"uri": "#directive-setfromdoc", "label": "setFromDoc","indent": 2},
+        {"uri": "#directive-imagedata", "label": "imageData","indent": 2},
         {"uri": "#templates", "label": "Templates"},
         {"uri": "#loading-templates", "label": "Loading","indent": 1},
         {"uri": "#project-config", "label": "Project"},
