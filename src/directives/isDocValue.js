@@ -29,7 +29,7 @@ module.exports = function isDocValue(
                 items[ i ][ prop ] = value;
             }
         }
-    } else if ( parent[ compare ] === doc[ compare ] ) {
+    } else if ( items === doc[ compare ] ) {
         parent[ prop ] = value;
     }
 };
