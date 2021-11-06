@@ -364,6 +364,77 @@ Array of objects:
 
 ```
 
+#### Directive sort
+
+Sorts a property with an array value, supports regular sort and by item.property.
+
+All directive arguments are property names:
+
+Name       | Description
+---------- | ---
+ prop      | Object property to sort by, default: null
+ direction | Set to 'desc' for reverse order, default: 'asc'
+
+Single object: *WIP NOT SUPPORTED YET*
+
+```
+// Input
+{
+   "__directives": ["sort:things:key"],
+   "things": {
+      "b": 2,
+      "a": 5,
+      "f": 9,
+      "z": 1,
+      "c": 4
+   },
+}
+
+// Result
+{
+   "things": {},
+}
+
+```
+
+Array of primitives:
+
+```
+// Input
+{
+   "__directives": ["sort:things"],
+   "things": [2,9,7,5,4],
+}
+
+// Result
+{
+   "things": [2,4,5,7,9],
+}
+
+```
+
+Array of objects:
+
+```
+// Input
+{
+   "__directives": ["imageData:items"],
+   "items": [
+      {"image": "img/foo.jpg"},
+      {"image": "img/picture.jpg"}
+   ]
+}
+
+// Result
+{
+   "items": [
+      {"image": {...}},
+      {"image": {...}}
+   ]
+}
+
+```
+
 ## Templates
 
 The templates structure is all yours, following the default [loading pattern](#loading-templates), which can be modified via the [plugin template](#plugin-template) method with a [plugin](#plugins) to load whatever you like.

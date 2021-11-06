@@ -73,6 +73,18 @@ class TwigHouseException extends Exception {}
 class TwigHouseWarning extends Warning {}
 
 /**
+ * TwigHouse directive exception
+ * @class
+ */
+class TwigHouseDirectiveException extends Exception {}
+
+/**
+ * TwigHouse directive warning
+ * @class
+ */
+class TwigHouseDirectiveWarning extends Warning {}
+
+/**
  * TwigHouse class
  * @class
  * @type {TwigHouse}
@@ -299,7 +311,7 @@ class TwigHouse {
          * @property
          * @type {string[]}
          */
-        this._builtinDirectives = [ 'setFromDoc', 'isDocValue', 'imageData' ];
+        this._builtinDirectives = [ 'setFromDoc', 'isDocValue', 'imageData', 'sort' ];
     }
 
     /**
@@ -1331,9 +1343,9 @@ class TwigHouse {
     }
 }
 
-// Export TwigHouseException as static property constructor
+// Export Exceptions and Warnings as static property constructor
 TwigHouse.TwigHouseException = TwigHouseException;
-
-// Export TwigHouseWarning as static property constructor
 TwigHouse.TwigHouseWarning = TwigHouseWarning;
+TwigHouse.TwigHouseDirectiveException = TwigHouseDirectiveException;
+TwigHouse.TwigHouseDirectiveWarning = TwigHouseDirectiveWarning;
 module.exports = TwigHouse;

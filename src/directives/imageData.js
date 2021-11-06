@@ -25,7 +25,7 @@ try {
 function getImageObject( src, root, doc, twigH ) {
     let o = {};
     if ( !sizeOf ) {
-        twigH.warn( new twigH.constructor.TwigHouseWarning( 'Directive imageData uses optional module: image-size ^1.0.0' ) );
+        twigH.warn( new twigH.constructor.TwigHouseDirectiveWarning( 'Directive imageData uses optional module: image-size ^1.0.0' ) );
         o.type = path.parse( src ).ext;
         if ( o.type[ 0 ] === '.' ) {
             o.type = o.type.substr( 1 );
