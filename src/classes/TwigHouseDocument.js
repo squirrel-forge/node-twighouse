@@ -172,7 +172,7 @@ class TwigHouseDocument {
      * @return {Object} - Plain object representation of document
      */
     toObject() {
-        const props = [ 'source', 'root', 'slug', 'dir', 'ref', 'uri', 'url' ];
+        const props = [ 'slug', 'dir', 'ref', 'uri', 'url' ];
         const data = {};
         for ( let i = 0; i < props.length; i++ ) {
             const prop = props[ i ];
