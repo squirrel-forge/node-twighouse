@@ -147,6 +147,30 @@ class TwigHouseDocument {
     }
 
     /**
+     * Get uri from data
+     * @param {string} reference - Reference path
+     * @param {string} root - Root path
+     * @param {TwigHouse} twigH - TwigHouse instance
+     * @return {string} - Uri
+     */
+    static getUriFrom( reference, root, twigH ) {
+        const { name, dir, ext } = path.parse( reference );
+        const rel = twigH.fs.relative2root( dir, root );
+        return twigH._config.docRoot + ( rel.length ? rel + '/' : '' ) + name + ext;
+    }
+
+    /**
+     * Get url from data
+     * @param {string} reference - Reference path
+     * @param {string} root - Root path
+     * @param {TwigHouse} twigH - TwigHouse instance
+     * @return {string} - Url
+     */
+    static getUrlFrom( reference, root, twigH ) {
+        return twigH._config.docDomain + TwigHouseDocument.getUriFrom( reference, root, twigH );
+    }
+
+    /**
      * Get document uri
      * @protected
      * @return {string} - Document uri
