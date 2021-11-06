@@ -1,7 +1,13 @@
 /**
- * Requires
+ * Optional modules
+ * Will cause warning only when using the directive
  */
-const showdown  = require( 'showdown' );
+let showdown;
+try {
+    showdown = require( 'showdown' );
+} catch ( e ) {
+    showdown = null;
+}
 
 /**
  * Directive: convert markdown text with showdown
@@ -13,6 +19,10 @@ const showdown  = require( 'showdown' );
  * @return {Promise<void>} - Possibly throws errors in strict mode
  */
 module.exports = function exampleDirectiveSync( text, key, parent, doc, twigH ) {
+    if ( !showdown ) {
+        twigH.warn( new twigH.constructor.TwigHouseWarning( 'Directive showdownConvert requires optional module: showdown ^1.9.1' ) );
+        return text;
+    }
     const converter = new showdown.Converter( {
         ghCompatibleHeaderId : true,
         omitExtraWLInCodeBlocks : true,
