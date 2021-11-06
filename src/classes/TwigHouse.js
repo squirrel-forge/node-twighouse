@@ -98,7 +98,7 @@ class TwigHouse {
          * @property
          * @type {string}
          */
-        this.VERSION = '0.8.4';
+        this.VERSION = '0.8.6';
 
         /**
          * Development mode
@@ -1122,7 +1122,9 @@ class TwigHouse {
             } else if ( type === 'json' && ( value instanceof Array || isPojo( value ) ) ) {
 
                 // Generate JSON string with indent option
-                doc = JSON.stringify( value, null, 2 );
+                doc = JSON.stringify( value, ( k, v ) => {
+                    return v instanceof TwigHouseDocument ? v.toObject( this._config.verbose ) : v;
+                }, 2 );
             }
 
             // Write document and notify if requested

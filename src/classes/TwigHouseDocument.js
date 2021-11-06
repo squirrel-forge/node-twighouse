@@ -169,10 +169,14 @@ class TwigHouseDocument {
     /**
      * To object converter
      * @public
+     * @param {boolean} verbose - Output source and root
      * @return {Object} - Plain object representation of document
      */
-    toObject() {
+    toObject( verbose = false ) {
         const props = [ 'slug', 'dir', 'ref', 'uri', 'url' ];
+        if ( verbose ) {
+            props.unshift( 'source', 'root' );
+        }
         const data = {};
         for ( let i = 0; i < props.length; i++ ) {
             const prop = props[ i ];
