@@ -287,7 +287,7 @@ class TwigHouse {
          * @property
          * @type {string[]}
          */
-        this._builtinDirectives = [ 'setFromDoc', 'isDocValue' ];
+        this._builtinDirectives = [ 'setFromDoc', 'isDocValue', 'imageData' ];
     }
 
     /**
@@ -1123,6 +1123,9 @@ class TwigHouse {
 
                 // Generate JSON string with indent option
                 doc = JSON.stringify( value, ( k, v ) => {
+                    if ( k.substr( 0, 2 ) === '__' ) {
+                        return;
+                    }
                     return v instanceof TwigHouseDocument ? v.toObject( this._config.verbose ) : v;
                 }, 2 );
             }
@@ -1273,4 +1276,7 @@ class TwigHouse {
 
 // Export TwigHouseException as static property constructor
 TwigHouse.TwigHouseException = TwigHouseException;
+
+// Export TwigHouseWarning as static property constructor
+TwigHouse.TwigHouseWarning = TwigHouseWarning;
 module.exports = TwigHouse;
