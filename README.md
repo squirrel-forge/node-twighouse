@@ -23,8 +23,8 @@ npm i @squirrel-forge/twighouse -g
 ### Quickstart
 
 To see a working example run following commands inside an empty directory.
-The example uses directives and the showdown module, included as dev dependency, to render this README.md to html.
-To use the example you must install showdown yourself, it is neither needed nor required for twighouse itself.
+The example uses directives and the showdown module, included as an optional dependency, to render this README.md to html.
+To use the example you must install the optional dependencies or showdown yourself, it is neither needed nor required for twighouse.
 ```
 npm i showdown@1.9.1
 
@@ -37,7 +37,7 @@ twighouse example dist
 
 ```
 You will find the compiled files inside the dist directory and the example source data inside the example directory.
-The example is alot more complex than what you might need, it tries to illustrate possibilities, if you feel there is something missing please submit a feature request an I will look into it.
+The example is a lot more complex than what you might need, it tries to illustrate possibilities, but does not include every feature. If you feel there is something important missing please submit a feature request and I will look into it.
 
 ## cli usage
 
