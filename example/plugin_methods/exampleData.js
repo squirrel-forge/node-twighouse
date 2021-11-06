@@ -5,9 +5,7 @@ const path = require( 'path' );
 
 /**
  * Count object/properties array/length
- *
- * @param {*} obj - An object or array to recusivly count
- *
+ * @param {*} obj - An object or array to recursively count
  * @return {number} - Will always return 0 when supplied with a non object
  */
 function countRecursive( obj ) {
