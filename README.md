@@ -810,6 +810,7 @@ Whenever there is time and space. Bugs and fixes will always get priority above 
  - Remote template loading? is it possible with twig extends and includes etc?
  - More document properties?
  - More builtin usable directives? ideas?
+ - directive sort, support for object property sorting and custom compare
  - Some useful twig extensions? ideas?
 
 **A note on the side:** TwigHouse will *probably never* implement any sass, javascript or similar compile features, since it is meant for templating and does not want solve problems that belong elsewhere.
