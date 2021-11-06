@@ -39,6 +39,9 @@ const isPojo = require( '../fn/isPojo' );
  * @property {string} docRoot - Document root used for uri and url, default: '/'
  * @property {string} docOmitIndex - For index files do not include the filename for uri and url, default: true
  * @property {string} docExt - Document extension used for uri and url, default: '.html'
+ * @property {null|Array<string>} jsonHideTypes - Hide type and functional data on write, default: null
+ * @property {null|Array<string>} jsonDiscardProps - Hide specific prop names on write, default: null
+ * @property {null|Function} jsonReplacer - JSON replacer function, default: null
  * @property {boolean} minify - Minify document output
  * @property {string} minifyProperty - Minify options property on page to use, default: '__minify'
  * @property {Object} minifyOptions - Minify plugin options
@@ -194,6 +197,15 @@ class TwigHouse {
             /** Document extension used for uri and url */
             docExt : '.html',
 
+            /** Hide type and functional data on write */
+            jsonHideTypes : null,
+
+            /** Hide specific prop names on write */
+            jsonDiscardProps : [ '__directives', '__fragment' ],
+
+            /** JSON replacer function */
+            jsonReplacer : null,
+
             /** Minify document output */
             minify : false,
 
@@ -291,7 +303,57 @@ class TwigHouse {
     }
 
     /**
+     * Set custom JSON replacer
+     * @param {null|Function} replacer - Replacer function, null to clear
+     * @return {void}
+     */
+    setJSONReplacer( replacer ) {
+        if ( !( replacer === null || typeof replacer === 'function' ) ) {
+            this.error( new TwigHouseException( 'Invalid argument type, cannot set/clear json replacer, must be null or function' ) );
+            return;
+        }
+        this._config.jsonReplacer = replacer;
+    }
+
+    /**
+     * Get json replacer
+     * @public
+     * @return {Function} - JSON.stringify replacer
+     */
+    getJSONReplacer() {
+
+        // Return customized replacer
+        if ( typeof this._config.jsonReplacer === 'function' ) {
+            return this._config.jsonReplacer;
+        }
+
+        /**
+         * JSON stringify replacer
+         * @public
+         * @param {string} k - Key
+         * @param {*} v - Value
+         * @return {*} - Value
+         */
+        return ( k, v ) => {
+
+            // Hide by matching first two chars
+            if ( this._config.jsonHideTypes && this._config.jsonHideTypes.includes( k.substr( 0, 2 ) ) ) {
+                return;
+            }
+
+            // Hide properties by name
+            if ( this._config.jsonDiscardProps && this._config.jsonDiscardProps.includes( k ) ) {
+                return;
+            }
+
+            // Convert document to data
+            return v instanceof TwigHouseDocument ? v.toObject( this._config.verbose ) : v;
+        };
+    }
+
+    /**
      * Clear cache
+     * @public
      * @param {boolean} docs - Clear docs
      * @param {boolean} data - Clear data, also clears directive stats
      * @param {boolean} fragments - Clear fragments
@@ -1122,12 +1184,7 @@ class TwigHouse {
             } else if ( type === 'json' && ( value instanceof Array || isPojo( value ) ) ) {
 
                 // Generate JSON string with indent option
-                doc = JSON.stringify( value, ( k, v ) => {
-                    if ( k.substr( 0, 2 ) === '__' ) {
-                        return;
-                    }
-                    return v instanceof TwigHouseDocument ? v.toObject( this._config.verbose ) : v;
-                }, 2 );
+                doc = JSON.stringify( value, this.getJSONReplacer(), 2 );
             }
 
             // Write document and notify if requested

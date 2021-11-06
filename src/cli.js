@@ -335,12 +335,7 @@ module.exports = async function cli() {
             }
 
             // All we want is to show as output
-            cfx.log( JSON.stringify( twigH._data, ( k, v ) => {
-                if ( !twigH._config.verbose && k.substr( 0, 2 ) === '__' ) {
-                    return;
-                }
-                return v instanceof TwigHouseDocument ? v.toObject( twigH._config.verbose ) : v;
-            }, 2 ) );
+            cfx.log( JSON.stringify( twigH._data, twigH.getJSONReplacer(), 2 ) );
             if ( !config.silent && this.verbose ) {
                 cfx.success( 'Total pages: ' + Object.keys( twigH._data ).length );
             }
