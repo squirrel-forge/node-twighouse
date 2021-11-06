@@ -16,9 +16,9 @@ function getFromReference( ref, type, twigH ) {
         if ( typeof doc[ type ] !== 'undefined' ) {
             return doc[ type ];
         }
-        throw Error( 'Property "' + type + '" does not exist on document: ' + ref );
+        twigH.error( new twigH.constructor.TwigHouseException( 'Property "' + type + '" does not exist on document: ' + ref ), true );
     } else if ( !isUrl( ref ) && ref[ 0 ] !== '/' ) {
-        throw Error( 'Could not fetch "' + type + '" on document not found: ' + ref );
+        twigH.warn( new twigH.constructor.TwigHouseWarning( 'Could not fetch "' + type + '" from document not found: ' + ref ) );
     }
     return null;
 }
