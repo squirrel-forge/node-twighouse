@@ -778,7 +778,7 @@ function loader( url, limit, data, twigH ) {
 
 Directives can be registered the following way, see how to define [directives](#directives) in your source json, check the example directives for implementation details.
 
-Activate a builtin directive, see the [directives](#available-directives) list for available names.
+Activate a builtin directive, see the [builtin directives](#builtin-directives) list for available names.
 
 ```
 twigH.useDirective( 'isDocValue' );
@@ -821,7 +821,7 @@ Now that you have reached the end, explore the code comments. if that does not h
 
 ## Personal note
 
-I have written a lot of code over the years and one thing that always returned, was the problem to quickly wip up some html, sure you can use all sorts of setups, but they all require some large framework, a complex environment and a lot of work setting everything up. Well I wanted something fast and be able to re-use things without needing to copy-paste and merge updates in loads of files over and over again. I have made a similar alot simpler tool with php that served me well over the years, but I decided it was time for a fresh approach, hence the switch to node and twig templates. I want to use this tool to build simple sites and make static mockups where the resulting code can be re-used if need be. I enjoy writing useful code and I wanted to share, that somebody else might find it useful also. Feedback, issues and feature requests are welcome, but the latter should focus on the scope of the tool. Although I'd be glad, for now, to help with your own plugin to supply features that do not fit the scope.
+I have written a lot of code over the years and one thing that always returned, was the problem to quickly wip up some html, sure you can use all sorts of setups, but they all require some large framework, a complex environment and a lot of work setting everything up. Well I wanted something fast and be able to re-use things without needing to copy-paste and merge updates in loads of files over and over again. I have made a similar a lot simpler tool with php that served me well over the years, but I decided it was time for a fresh approach, hence the switch to node and twig templates. I want to use this tool to build simple sites and make static mockups where the resulting code can be re-used if need be. I enjoy writing useful code and I wanted to share, that somebody else might find it useful also. Feedback, issues and feature requests are welcome, but the latter should focus on the scope of the tool. Although I'd be glad, for now, to help with your own plugin to supply features that do not fit the scope.
 
 *dan aka siux*
 
@@ -836,3 +836,6 @@ Whenever there is time and space. Bugs and fixes will always get priority above 
  - Some useful twig extensions? ideas?
 
 **A note on the side:** TwigHouse will *probably never* implement any sass, javascript or similar compile features, since it is meant for templating and does not want solve problems that belong elsewhere.
+
+
+scheidungs papiere

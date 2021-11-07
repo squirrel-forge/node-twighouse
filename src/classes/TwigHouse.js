@@ -1287,7 +1287,7 @@ class TwigHouse {
         }
 
         // Template reference from document path
-        paths.push( path.join( tmpl_path, data.document.dir ) );
+        paths.push( path.join( tmpl_path, data.document.ref ) );
 
         // Template from default template option
         paths.push( path.join( tmpl_path, this._config.defaultTemplate ) );
@@ -1312,14 +1312,14 @@ class TwigHouse {
             if ( path_exists ) {
                 available_path = src;
                 if ( this._config.verbose ) {
-                    this.info( 'Using template: ' + paths[ i ] + this._config.templateExt + ' for page: ' + ref );
+                    this.info( 'Using template: ' + src + ' for page: ' + ref );
                 }
                 break;
             }
 
             // Only notify if verbose
             if ( this._config.verbose ) {
-                this.info( 'Template not found: ' + paths[ i ] + this._config.templateExt + ' for page: ' + ref );
+                this.info( '- possible template: ' + src + ' for page: ' + ref );
             }
         }
         return available_path;
