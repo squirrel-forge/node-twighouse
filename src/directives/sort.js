@@ -18,6 +18,10 @@ module.exports = function sort(
     prop = null,
     direction = 'asc',
 ) {
+    if ( prop === 'asc' || prop === 'desc' ) {
+        direction = prop;
+        prop = null;
+    }
     if ( items instanceof Array ) {
         if ( prop ) {
 
