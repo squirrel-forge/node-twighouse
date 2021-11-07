@@ -315,6 +315,14 @@ class TwigHouse {
         this._builtinDirectives = [ 'setFromDoc', 'isDocValue', 'imageData', 'sort' ];
 
         /**
+         * Compare function reference
+         * @protected
+         * @property
+         * @type {{name:Function}}
+         */
+        this._compares = {};
+
+        /**
          * Output buffer
          * @type {OutputBuffer}
          */
@@ -322,7 +330,41 @@ class TwigHouse {
     }
 
     /**
+     * Register a compare function
+     * @public
+     * @param {string} name - Reference name
+     * @param {Function} fn - Compare function
+     * @return {void}
+     */
+    registerCompare( name, fn ) {
+        if ( typeof name !== 'string' || !name.length ) {
+            this.error( new TwigHouseException( 'Compare name must be a valid string' ), true );
+        }
+        if ( typeof fn !== 'function' ) {
+            this.error( new TwigHouseException( 'Compare function must be a function' ), true );
+        }
+        if ( this._compares[ name ] ) {
+            this.warn( new TwigHouseWarning( 'Compare already defined: ' + name ) );
+        }
+        this._compares[ name ] = fn;
+    }
+
+    /**
+     * Get compare function
+     * @public
+     * @param {string} name - Reference name
+     * @return {null|Function} - Compare function
+     */
+    getCompare( name ) {
+        if ( this._compares[ name ] ) {
+            return this._compares[ name ];
+        }
+        return null;
+    }
+
+    /**
      * Set custom JSON replacer
+     * @public
      * @param {null|Function} replacer - Replacer function, null to clear
      * @return {void}
      */
@@ -348,7 +390,7 @@ class TwigHouse {
 
         /**
          * JSON stringify replacer
-         * @public
+         * @private
          * @param {string} k - Key
          * @param {*} v - Value
          * @return {*} - Value

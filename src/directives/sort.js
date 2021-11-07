@@ -4,24 +4,34 @@
 const isPojo = require( '../fn/isPojo' );
 
 /**
+ * Get property compare function
+ * @param {number|string} prop - Property name or index
+ * @return {(function(*, *): (number))} - Compare function
+ */
+function propCompare( prop ) {
+    return ( a, b ) => {
+        if ( a[ prop ] < b[ prop ] ) return -1;
+        if ( a[ prop ] > b[ prop ] ) return 1;
+        return 0;
+    };
+}
+
+/**
  * Sort object properties
  * @param {Object} obj - Object to sort
  * @param {('key'|'value')} mode - Sort by, default: 'key'
  * @param {('asc'|'desc')} direction - Sorting direction, default: 'asc'
+ * @param {null|Function} fn - Compare function, default: null
  * @return {void}
  */
-function sortObjectProperties( obj, mode = 'key', direction = 'asc' ) {
+function sortObjectProperties( obj, mode = 'key', direction = 'asc', fn = null ) {
 
     // Key is the first value of entries
     mode = mode === 'key' ? 0 : 1;
 
     // Sort entries
     const entries = Object.entries( obj );
-    entries.sort( ( a, b ) => {
-        if ( a[ mode ] < b[ mode ] ) return -1;
-        if ( a[ mode ] > b[ mode ] ) return 1;
-        return 0;
-    } );
+    entries.sort( fn || propCompare( mode ) );
 
     // Reverse direction
     if ( direction === 'desc' ) {
@@ -45,6 +55,7 @@ function sortObjectProperties( obj, mode = 'key', direction = 'asc' ) {
  * @param {TwigHouse} twigH - TwigHouse instance
  * @param {string} prop - Sorting property for objects, default: null
  * @param {string} direction - Sorting direction, default: 'asc'
+ * @param {string} custom - Custom sorting function name
  * @return {void}
  */
 module.exports = function sort(
@@ -55,6 +66,7 @@ module.exports = function sort(
     twigH,
     prop = null,
     direction = 'asc',
+    custom = null,
 ) {
     if ( prop === 'asc' || prop === 'desc' ) {
 
@@ -62,19 +74,20 @@ module.exports = function sort(
         direction = prop;
         prop = null;
     }
+    let fn = null;
+    if ( custom ) {
+        fn = twigH.getCompare( custom );
+        if ( !fn ) twigH.warn( new twigH.constructor.TwigHouseDirectiveWarning( 'Compare function not defined: ' + custom ) );
+    }
     if ( items instanceof Array ) {
         if ( prop ) {
 
-            // Sort objects by property name
-            items.sort( ( a, b ) => {
-                if ( a[ prop ] < b[ prop ] ) return -1;
-                if ( a[ prop ] > b[ prop ] ) return 1;
-                return 0;
-            } );
+            // Sort objects by property name or custom function
+            items.sort( fn || propCompare( prop ) );
         } else {
 
             // Regular boring sort
-            items.sort();
+            items.sort( fn );
         }
 
         // Reverse direction
@@ -82,7 +95,7 @@ module.exports = function sort(
             items.reverse();
         }
     } else if ( items !== null && isPojo( items ) ) {
-        sortObjectProperties( items, !prop || prop === 'key' ? 'key' : 'value', direction );
+        sortObjectProperties( items, !prop || prop === 'key' ? 'key' : 'value', direction, fn );
     } else {
         twigH.warn( new twigH.constructor.TwigHouseDirectiveWarning( 'Can\'t sort value of type: ' + typeof items ) );
     }
