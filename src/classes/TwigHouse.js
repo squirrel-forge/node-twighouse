@@ -5,6 +5,7 @@ const path = require( 'path' );
 const Twig = require( 'twig' );
 const minify = require( 'html-minifier' ).minify;
 const TwigHouseDocument = require( './TwigHouseDocument' );
+const OutputButter = require( './OutputButter' );
 const FsInterface = require( './FsInterface' );
 const Plugins = require( './Plugins' );
 const Exception = require( './Exception' );
@@ -312,6 +313,12 @@ class TwigHouse {
          * @type {string[]}
          */
         this._builtinDirectives = [ 'setFromDoc', 'isDocValue', 'imageData', 'sort' ];
+
+        /**
+         * Output buffer
+         * @type {OutputBuffer}
+         */
+        this.ob = new OutputButter();
     }
 
     /**
@@ -1287,12 +1294,34 @@ class TwigHouse {
      */
     renderTemplate( template, data, ref ) {
         return new Promise( ( resolve, reject ) => {
+
+            // Buffer output and start render
+            this.ob.start();
             Twig.renderFile( template, data, ( err, html ) => {
+
+                // Stop buffering output
+                this.ob.end();
                 if ( err ) {
-                    const twex = new TwigHouseException( 'Template error in: ' + ref, err );
-                    this.error( twex );
-                    reject( twex );
+
+                    // Twig actually gave us an error, usually just the template not found
+                    reject( new TwigHouseException( 'Template error in: ' + ref, err ) );
                 } else {
+
+                    // If we caught any twig errors during the twig render of the template
+                    if ( this.ob.length ) {
+                        const is_warning = html && html.length && !this._config.strict;
+
+                        // Put them into a warning, since the template might be partially be rendered
+                        const trace = this.ob.contents();
+                        const prev = new Exception( trace.shift().trim(), new Exception( trace.join( '' ).trim() ) );
+
+                        // Flush the buffer and output the warning
+                        // If no in strict mode this might resolve to a partially rendered template
+                        this.ob.flush();
+                        const error = [ 'Twig ' + ( is_warning ? 'warning' : 'error' ) + '/s for: ' + ref, prev ];
+                        this[ is_warning ? 'warn' : 'error' ]( is_warning ?
+                            new TwigHouseWarning( ...error ) : new TwigHouseException( ...error ) );
+                    }
                     resolve( html );
                 }
             } );
@@ -1305,11 +1334,16 @@ class TwigHouse {
      * @param {string} ref - Page reference
      * @param {Object} data - Page data
      * @param {string} template - Template path
+     * @throws {Exception}
      * @return {Promise<void>} - Possibly throws errors in strict mode
      */
     async renderPage( ref, data, template ) {
-        this._rendered[ ref ] = await this.renderTemplate( template, data, ref );
-        await this.plugins.run( 'html', [ ref, this._rendered, this ] );
+        try {
+            this._rendered[ ref ] = await this.renderTemplate( template, data, ref );
+            await this.plugins.run( 'html', [ ref, this._rendered, this ] );
+        } catch ( e ) {
+            this.error( e );
+        }
     }
 
     /**
