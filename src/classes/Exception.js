@@ -28,7 +28,7 @@ module.exports = class Exception extends Error {
      * @return {string} - String representation of the exception
      */
     toString() {
-        return super.toString() + ( this.previous ? ' <<< ' + this.previous.toString() : '' );
+        return super.toString() + ( this.previous ? '\n > ' + this.previous.toString() : '' );
     }
 
     /**
@@ -37,6 +37,6 @@ module.exports = class Exception extends Error {
      * @return {string} - String representation of the exception
      */
     toLocaleString() {
-        return super.toLocaleString() + ( this.previous ? ' <<< ' + this.previous.toLocaleString() : '' );
+        return super.toLocaleString() + ( this.previous ? '\n > ' + this.previous.toLocaleString() : '' );
     }
 };
