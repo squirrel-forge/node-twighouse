@@ -1,4 +1,42 @@
 /**
+ * Requires
+ */
+const isPojo = require( '../fn/isPojo' );
+
+/**
+ * Sort object properties
+ * @param {Object} obj - Object to sort
+ * @param {('key'|'value')} mode - Sort by, default: 'key'
+ * @param {('asc'|'desc')} direction - Sorting direction, default: 'asc'
+ * @return {void}
+ */
+function sortObjectProperties( obj, mode = 'key', direction = 'asc' ) {
+
+    // Key is the first value of entries
+    mode = mode === 'key' ? 0 : 1;
+
+    // Sort entries
+    const entries = Object.entries( obj );
+    entries.sort( ( a, b ) => {
+        if ( a[ mode ] < b[ mode ] ) return -1;
+        if ( a[ mode ] > b[ mode ] ) return 1;
+        return 0;
+    } );
+
+    // Reverse direction
+    if ( direction === 'desc' ) {
+        entries.reverse();
+    }
+
+    // Set values
+    for ( let i = 0; i < entries.length; i++ ) {
+        const [ k, v ] = entries[ i ];
+        delete obj[ k ];
+        obj[ k ] = v;
+    }
+}
+
+/**
  * Directive: sort
  * @param {string|Array} items - Item value
  * @param {string} key - Item key
@@ -19,6 +57,8 @@ module.exports = function sort(
     direction = 'asc',
 ) {
     if ( prop === 'asc' || prop === 'desc' ) {
+
+        // Empty the prop if its a direction
         direction = prop;
         prop = null;
     }
@@ -41,8 +81,8 @@ module.exports = function sort(
         if ( direction === 'desc' ) {
             items.reverse();
         }
-    } else if ( items !== null && typeof items === 'object' ) {
-        twigH.warn( new twigH.constructor.TwigHouseDirectiveWarning( 'Object property sorting is not available yet.' ), true );
+    } else if ( items !== null && isPojo( items ) ) {
+        sortObjectProperties( items, !prop || prop === 'key' ? 'key' : 'value', direction );
     } else {
         twigH.warn( new twigH.constructor.TwigHouseDirectiveWarning( 'Can\'t sort value of type: ' + typeof items ) );
     }

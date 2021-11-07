@@ -209,7 +209,7 @@ A list of builtin directives an how they can be used.
 
 Compares a property to the [document object](#document-object) and sets a property to *true* if the values are equal, used to set nav items active state for example.
 
-All directive arguments are property names:
+Directive arguments:
 
 Name     | Description
 -------- | ---
@@ -260,7 +260,7 @@ Array of objects:
 
 Reads a property with a document reference and sets a property with a specified name, used to set uri/url properties for document references inside the source tree.
 
-All directive arguments are property names:
+Directive arguments:
 
 Name    | Description
 ------- | ---
@@ -274,12 +274,12 @@ Single object:
 // Input
 {
    "__directives": ["setFromDoc:uri"],
-   "uri": "index",
+   "uri": "index"
 }
 
 // Result
 {
-   "uri": "/",
+   "uri": "/"
 }
 
 ```
@@ -311,7 +311,7 @@ Array of objects:
 Reads a property with a image path and sets a property with a specified name with extended image data such as sizes and uri/url.
 This directive requires and optional dependency of [image-size](https://www.npmjs.com/package/image-size)
 
-All directive arguments are property names:
+Directive arguments:
 
 Name  | Description
 ----- | ---
@@ -325,7 +325,7 @@ Single object:
 // Input
 {
    "__directives": ["imageData:image"],
-   "image": "img/foo.jpg",
+   "image": "img/foo.jpg"
 }
 
 // Result
@@ -337,7 +337,7 @@ Single object:
       "src": "img/foo.jpg",
       "uri": "/img/foo.jpg",
       "url": "http://.../img/foo.jpg"
-   },
+   }
 }
 
 ```
@@ -368,19 +368,19 @@ Array of objects:
 
 Sorts a property with an array value, supports regular sort and by item.property.
 
-All directive arguments are property names:
+Directive arguments:
 
 Name       | Description
 ---------- | ---
- prop      | Object property to sort by, default: null
+ prop      | Object property to sort by, can be set as direction if not needed, default: null
  direction | Set to 'desc' for reverse order, default: 'asc'
 
-Single object: *WIP NOT SUPPORTED YET*
+Single object:
 
 ```
 // Input
 {
-   "__directives": ["sort:things:key"],
+   "__directives": ["sort:things", "sort:numbers:value"],
    "things": {
       "b": 2,
       "a": 5,
@@ -388,11 +388,31 @@ Single object: *WIP NOT SUPPORTED YET*
       "z": 1,
       "c": 4
    },
+   "numbers": {
+      "b": 2,
+      "a": 5,
+      "f": 9,
+      "z": 1,
+      "c": 4
+   }
 }
 
 // Result
 {
-   "things": {},
+   "things": {
+      "a": 5,
+      "b": 2,
+      "c": 4
+      "f": 9,
+      "z": 1,
+   },
+   "numbers": {
+      "z": 1,
+      "b": 2,
+      "c": 4
+      "a": 5,
+      "f": 9,
+   }
 }
 
 ```
@@ -403,12 +423,12 @@ Array of primitives:
 // Input
 {
    "__directives": ["sort:things"],
-   "things": [2,9,7,5,4],
+   "things": [2,9,7,5,4]
 }
 
 // Result
 {
-   "things": [2,4,5,7,9],
+   "things": [2,4,5,7,9]
 }
 
 ```
@@ -810,7 +830,7 @@ Whenever there is time and space. Bugs and fixes will always get priority above 
  - Remote template loading? is it possible with twig extends and includes etc?
  - More document properties?
  - More builtin usable directives? ideas?
- - directive sort, support for object property sorting and custom compare
+ - directive sort, support custom compare as plugin method?
  - Some useful twig extensions? ideas?
 
 **A note on the side:** TwigHouse will *probably never* implement any sass, javascript or similar compile features, since it is meant for templating and does not want solve problems that belong elsewhere.
