@@ -109,14 +109,6 @@ class TwigHouse {
         this._cfx = cfx;
 
         /**
-         * Version
-         * @public
-         * @property
-         * @type {string}
-         */
-        this.VERSION = '0.8.6';
-
-        /**
          * Development mode
          * @protected
          * @property
@@ -131,6 +123,14 @@ class TwigHouse {
          * @type {string} - Install path
          */
         this.installDirectory = path.resolve( __dirname, '../../' );
+
+        /**
+         * Version
+         * @public
+         * @property
+         * @type {string}
+         */
+        this.VERSION = require( path.join( this.installDirectory, 'package.json' ) ).VERSION;
 
         /**
          * Default config
