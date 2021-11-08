@@ -31,6 +31,9 @@
     "url": "https://github.com/squirrel-forge/node-twighouse/issues"
   },
   "homepage": "https://github.com/squirrel-forge/node-twighouse#readme",
+  "engines": {
+    "node": ">= 10.0.0"
+  },
   "dependencies": {
     "@squirrel-forge/node-cfx": "^1.0.2",
     "directory-tree": "^3.0.0",
