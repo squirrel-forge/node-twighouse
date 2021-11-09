@@ -34,6 +34,9 @@
   "engines": {
     "node": ">= 10.0.0"
   },
+  "devDependencies": {
+    "showdown": "^1.9.1"
+  },
   "dependencies": {
     "@squirrel-forge/node-cfx": "^1.0.2",
     "directory-tree": "^3.0.0",
@@ -44,7 +47,6 @@
     "twig": "^1.15.4"
   },
   "optionalDependencies": {
-    "image-size": "^1.0.0",
-    "showdown": "^1.9.1"
+    "image-size": "^1.0.0"
   }
 }
