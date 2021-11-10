@@ -134,7 +134,7 @@ module.exports = async function cli() {
         if ( readme ) {
             const info = readme.split( '### Arguments' )[ 1 ]
                 .split( '#### Using url data' )[ 0 ].trim().split( '\n' );
-            info.unshift( '### Arguments\n' );
+            info.unshift( '### Arguments' );
             for ( let i = 0; i < info.length; i++ ) {
                 if ( info[ i ].substr( 0, 4 ) === '####' ) {
                     cfx.warn( info[ i ].substr( 4 ).trim() );
