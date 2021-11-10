@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.9
+ - Added postinstall that creates an empty *.twighouse* config in your project directory if installed locally.
+ - Added application help command, to list arguments and options.
+ - Moved showdown back to dev dependencies.
+ - Removed application json output circular check, json replacer resolves the issue and deals with document conversion.
+
 ## 0.8.7
  - Colored exceptions, enforce path relations, api cache clear, directive imageData and sort, improved directives, json stringify replacer, implemented output buffer for better twig render errors and warnings.
 
