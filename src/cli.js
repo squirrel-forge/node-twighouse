@@ -327,13 +327,6 @@ module.exports = async function cli() {
 
         } else {
 
-            // Remove known circular references
-            const data_entries = Object.entries( twigH._data );
-            for ( let i = 0; i < data_entries.length; i++ ) {
-                const [ , data ] = data_entries[ i ];
-                delete data.document._twigH;
-            }
-
             // All we want is to show as output
             cfx.log( JSON.stringify( twigH._data, twigH.getJSONReplacer(), 2 ) );
             if ( !config.silent && this.verbose ) {
