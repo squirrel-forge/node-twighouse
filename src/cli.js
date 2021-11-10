@@ -132,9 +132,13 @@ module.exports = async function cli() {
         const fs = new FsInterface();
         const readme = await fs.readText( path.join( __dirname, '../', 'README.md' ) );
         if ( readme ) {
+
+            // Get only the arguments and options part of the readme and split by newlines
             const info = readme.split( '### Arguments' )[ 1 ]
                 .split( '#### Using url data' )[ 0 ].trim().split( '\n' );
             info.unshift( '### Arguments' );
+
+            // Output by line and highlight the title lines
             for ( let i = 0; i < info.length; i++ ) {
                 if ( info[ i ].substr( 0, 4 ) === '####' ) {
                     cfx.warn( info[ i ].substr( 4 ).trim() );
