@@ -22,7 +22,6 @@ $RECYCLE.BIN/
 ### Internal ###
 .twighouse
 !example/.twighouse
-node_modules/
 
 ### NPM only ###
 .github
