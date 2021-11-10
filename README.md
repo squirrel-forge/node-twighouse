@@ -47,6 +47,11 @@ twighouse source target --boolean --path=../dir --str=about --str=index,about
 
 ```
 
+For local installations use *npx* to run the twighouse executable.
+```
+npx twighouse ...
+```
+
 ### Arguments
 
 #### Using only one argument
@@ -66,6 +71,7 @@ A long option always override the value of a short option if both are used.
  Short | Long          | Type      | Description
 ------ | ------------- | --------- | ---
   -a   | --interactive | bool      | Run interactive mode
+  -h   | --help        | bool      | Show help
   -o   | --output-json | bool/save | Show/save compiled pages json only
   -m   | --minify      | bool      | Minifies the html output
   -l   | --limit       | str, ...  | Limit which page or pages should be compiled

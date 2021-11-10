@@ -52,6 +52,9 @@ module.exports = async function cli() {
         // Show version
         version : [ '-v', '--version', false, true ],
 
+        // Show help
+        help : [ '-h', '--help', false, true ],
+
         // Show config
         config : [ '-y', '--show-config', false, true ],
 
@@ -100,6 +103,7 @@ module.exports = async function cli() {
 
         // Get answers to cli options
         answers = await input.ask( {
+            help : { question : 'Show help? (yes/no)', is_bool : true, last : true },
             version : { question : 'Show version? (yes/no)', is_bool : true, last : true },
             config : { question : 'Show loaded config settings? (yes/no)', is_bool : true, last : true },
             example : { question : 'Deploy example? (yes/no)', is_bool : true, last : true },
@@ -117,6 +121,33 @@ module.exports = async function cli() {
 
         // Apply to options object
         setFromInteractive( options, answers );
+    }
+
+    // Show help
+    if ( options.help ) {
+        const pkg = require( path.join( __dirname, '../', 'package.json' ) );
+        cfx.success( pkg.name + '@' + pkg.version + ' [help]' );
+        cfx.log( '' );
+        const FsInterface = require( './classes/FsInterface' );
+        const fs = new FsInterface();
+        const readme = await fs.readText( path.join( __dirname, '../', 'README.md' ) );
+        if ( readme ) {
+            const info = readme.split( '### Arguments' )[ 1 ]
+                .split( '#### Using url data' )[ 0 ].trim().split( '\n' );
+            info.unshift( '### Arguments\n' );
+            for ( let i = 0; i < info.length; i++ ) {
+                if ( info[ i ].substr( 0, 4 ) === '####' ) {
+                    cfx.warn( info[ i ].substr( 4 ).trim() );
+                } else if ( info[ i ].substr( 0, 3 ) === '###' ) {
+                    cfx.success( info[ i ].substr( 3 ).trim() );
+                } else {
+                    cfx.log( info[ i ].trimRight() );
+                }
+            }
+            cfx.log( '' );
+            cfx.info( 'For more information visit: [fwhite]https://squirrel-forge.github.io/node-twighouse/' );
+        }
+        process.exit( 0 );
     }
 
     // Limit option must be an Array
