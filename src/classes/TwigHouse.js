@@ -353,13 +353,12 @@ class TwigHouse {
      * Get compare function
      * @public
      * @param {string} name - Reference name
-     * @return {null|Function} - Compare function
+     * @return {undefined|Function} - Compare function
      */
     getCompare( name ) {
         if ( this._compares[ name ] ) {
             return this._compares[ name ];
         }
-        return null;
     }
 
     /**

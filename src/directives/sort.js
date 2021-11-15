@@ -74,7 +74,7 @@ module.exports = function sort(
         direction = prop;
         prop = null;
     }
-    let fn = null;
+    let fn;
     if ( custom ) {
         fn = twigH.getCompare( custom );
         if ( !fn ) twigH.warn( new twigH.constructor.TwigHouseDirectiveWarning( 'Compare function not defined: ' + custom ) );
