@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.8.10
+ - Fixed OutputBuffer name typo.
+
 ## 0.8.9
  - Added postinstall that creates an empty *.twighouse* config in your project directory if installed locally.
  - Added application help command, to list arguments and options.

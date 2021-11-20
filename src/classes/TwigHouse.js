@@ -5,7 +5,7 @@ const path = require( 'path' );
 const Twig = require( 'twig' );
 const minify = require( 'html-minifier' ).minify;
 const TwigHouseDocument = require( './TwigHouseDocument' );
-const OutputButter = require( './OutputButter' );
+const OutputBuffer = require( './OutputBuffer' );
 const FsInterface = require( './FsInterface' );
 const Plugins = require( './Plugins' );
 const Exception = require( './Exception' );
@@ -326,7 +326,7 @@ class TwigHouse {
          * Output buffer
          * @type {OutputBuffer}
          */
-        this.ob = new OutputButter();
+        this.ob = new OutputBuffer();
     }
 
     /**
