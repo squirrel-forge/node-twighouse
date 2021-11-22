@@ -439,7 +439,7 @@ class TwigHouse {
     _exceptionAsOutput( msg, noTrace = false ) {
 
         // We check if its an exception, all other errors will be sent to output unmodified
-        if ( msg instanceof Exception ) {
+        if ( msg instanceof Error ) {
             if ( this._config.verbose && !noTrace ) {
 
                 // In verbose we want to whole stack
@@ -1229,7 +1229,7 @@ class TwigHouse {
 
             // Ensure directory
             const dir_available = await this.fs.dir( path.resolve( dir ) );
-            if ( !dir_available || dir_available instanceof Exception ) {
+            if ( !dir_available || dir_available instanceof Error ) {
                 this.error( new TwigHouseException( 'Failed to create directory: ' + dir, dir_available ) );
                 continue;
             }
@@ -1249,7 +1249,7 @@ class TwigHouse {
 
             // Write document and notify if requested
             const wrote = await this.fs.write( doc_path, doc );
-            if ( wrote instanceof Exception ) {
+            if ( wrote instanceof Error ) {
                 this.error( wrote );
             }
             if ( wrote ) {
