@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.8.11
+ - Removed unused, helper functions and classes in favor of versions from @squirrel-forge/node-util module.
+
 ## 0.8.10
  - Fixed OutputBuffer name typo.
 

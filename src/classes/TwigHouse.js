@@ -5,13 +5,13 @@ const path = require( 'path' );
 const Twig = require( 'twig' );
 const minify = require( 'html-minifier' ).minify;
 const TwigHouseDocument = require( './TwigHouseDocument' );
-const OutputBuffer = require( './OutputBuffer' );
-const FsInterface = require( './FsInterface' );
+const OutputBuffer = require( '@squirrel-forge/node-util' ).OutputBuffer;
+const FsInterface = require( '@squirrel-forge/node-util' ).FsInterface;
 const Plugins = require( './Plugins' );
-const Exception = require( './Exception' );
-const Warning = require( './Warning' );
-const isUrl = require( '../fn/isUrl' );
-const isPojo = require( '../fn/isPojo' );
+const Exception = require( '@squirrel-forge/node-util' ).Exception;
+const Warning = require( '@squirrel-forge/node-util' ).Warning;
+const isUrl = require( '@squirrel-forge/node-util' ).isUrl;
+const isPojo = require( '@squirrel-forge/node-util' ).isPojo;
 
 /**
  * @typedef {Object} TwigHouseConfig

@@ -5,7 +5,7 @@ const path = require( 'path' );
 const isInstalledGlobally = require( 'is-installed-globally' );
 const cfx = require( '@squirrel-forge/node-cfx' ).cfx;
 const pkg = require( path.join( __dirname, '../package.json' ) );
-const FsInterface = require( './classes/FsInterface' );
+const FsInterface = require( '@squirrel-forge/node-util' ).FsInterface;
 
 /**
  * Create config

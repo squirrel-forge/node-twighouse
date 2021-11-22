@@ -2,7 +2,7 @@
  * Requires
  */
 const path = require( 'path' );
-const Exception = require( './Exception' );
+const Exception = require( '@squirrel-forge/node-util' ).Exception;
 
 /**
  * TwigHouse exception

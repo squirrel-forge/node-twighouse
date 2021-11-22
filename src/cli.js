@@ -5,8 +5,8 @@ const path = require( 'path' );
 const copy = require( 'recursive-copy' );
 const cfx = require( '@squirrel-forge/node-cfx' ).cfx;
 const TwigHouse = require( './classes/TwigHouse' );
-const CliInput = require( './classes/CliInput' );
-const isUrl = require( './fn/isUrl' );
+const CliInput = require( '@squirrel-forge/node-util' ).CliInput;
+const isUrl = require( '@squirrel-forge/node-util' ).isUrl;
 
 /**
  * Set config values from interactive answers
