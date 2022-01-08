@@ -2,7 +2,7 @@
  * Requires
  */
 const path = require( 'path' );
-const Exception = require( '@squirrel-forge/node-util' ).Exception;
+const { Exception, FsInterface } = require( '@squirrel-forge/node-util' );
 
 /**
  * TwigHouse exception
@@ -76,7 +76,7 @@ class TwigHouseDocument {
          * @property
          * @type {string}
          */
-        this.dir = twigH.fs.relative2root( dir, this.root );
+        this.dir = FsInterface.relative2root( dir, this.root );
 
         /**
          * Document reference
@@ -155,7 +155,7 @@ class TwigHouseDocument {
      */
     static getUriFrom( reference, root, twigH ) {
         const { name, dir, ext } = path.parse( reference );
-        const rel = twigH.fs.relative2root( dir, root );
+        const rel = FsInterface.relative2root( dir, root );
         return twigH._config.docRoot + ( rel.length ? rel + '/' : '' ) + name + ext;
     }
 

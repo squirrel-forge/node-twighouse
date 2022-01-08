@@ -3,27 +3,26 @@
  */
 const path = require( 'path' );
 const isInstalledGlobally = require( 'is-installed-globally' );
-const cfx = require( '@squirrel-forge/node-cfx' ).cfx;
+const { cfx } = require( '@squirrel-forge/node-cfx' );
 const pkg = require( path.join( __dirname, '../package.json' ) );
-const FsInterface = require( '@squirrel-forge/node-util' ).FsInterface;
+const { FsInterface } = require( '@squirrel-forge/node-util' );
 
 /**
  * Create config
  * @return {Promise<boolean|string>} - Path string if created
  */
 async function createConfig() {
-    const fs = new FsInterface();
 
     // Project directory relation is always:
     // :/project/node_modules/@squirrel-forge/twighouse/src/
     const project_config = path.resolve( __dirname, '../../../../', '.twighouse' );
-    const has_config = await fs.exists( project_config );
+    const has_config = await FsInterface.exists( project_config );
     let wrote = false;
     if ( !has_config ) {
 
         // Attempt to create a blank config
         try {
-            wrote = await fs.write( project_config, '{}' );
+            wrote = await FsInterface.write( project_config, '{}' );
         } catch ( e ) {
             cfx.log( e.toString() );
         }

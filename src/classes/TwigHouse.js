@@ -3,15 +3,10 @@
  */
 const path = require( 'path' );
 const Twig = require( 'twig' );
-const minify = require( 'html-minifier' ).minify;
+const { minify } = require( 'html-minifier' );
+const { Exception, Warning, isPojo, isUrl, OutputBuffer, FsInterface } = require( '@squirrel-forge/node-util' );
 const TwigHouseDocument = require( './TwigHouseDocument' );
-const OutputBuffer = require( '@squirrel-forge/node-util' ).OutputBuffer;
-const FsInterface = require( '@squirrel-forge/node-util' ).FsInterface;
 const Plugins = require( './Plugins' );
-const Exception = require( '@squirrel-forge/node-util' ).Exception;
-const Warning = require( '@squirrel-forge/node-util' ).Warning;
-const isUrl = require( '@squirrel-forge/node-util' ).isUrl;
-const isPojo = require( '@squirrel-forge/node-util' ).isPojo;
 
 /**
  * @typedef {Object} TwigHouseConfig
@@ -241,14 +236,6 @@ class TwigHouse {
          * @type {boolean}
          */
         this._lockConfig = false;
-
-        /**
-         * File system interface
-         * @public
-         * @property
-         * @type {FsInterface}
-         */
-        this.fs = null;
 
         /**
          * Plugins handler
@@ -633,9 +620,6 @@ class TwigHouse {
         // Set config
         this.setConfig( config );
 
-        // Init fs
-        this.fs = new FsInterface();
-
         // Load config from cwd/source
         if ( typeof this._config.__configname === 'string' && this._config.__configname.length ) {
             await this._loadConfig();
@@ -664,14 +648,14 @@ class TwigHouse {
             // Assumes current cwd if root is an url
             config_path = path.resolve( path.join( isUrl( this._config.root ) ? '' : this._config.root, this._config.__configname ) );
         }
-        const config_exists = await this.fs.exists( config_path );
+        const config_exists = await FsInterface.exists( config_path );
         if ( config_exists ) {
             if ( this._config.verbose ) {
                 this.info( 'Reading config from: ' + config_path );
             }
             let config, err;
             try {
-                config = await this.fs.readJSON( config_path );
+                config = await FsInterface.readJSON( config_path );
             } catch ( e ) {
                 err = e;
             }
@@ -798,7 +782,7 @@ class TwigHouse {
 
             // Only get local plugins if none are set
             const plugin_path = this.getPath( 'plugins' );
-            fs_plugins = await this.fs.fileList( plugin_path, this._config.pluginExt );
+            fs_plugins = await FsInterface.fileList( plugin_path, this._config.pluginExt );
         }
 
         // Always use provided argument over the default filesystem list
@@ -821,7 +805,7 @@ class TwigHouse {
 
             // Only get local data if none are set
             const data_path = this.getPath( 'data' );
-            fs_data = await this.fs.fileList( data_path, 'json' );
+            fs_data = await FsInterface.fileList( data_path, 'json' );
         }
         const load_data = data_paths || fs_data;
         await this.collectPagesData( load_data, limit_index );
@@ -1004,9 +988,9 @@ class TwigHouse {
         let source;
         try {
             if ( isUrl( file ) ) {
-                source = await this.fs.remoteJSON( file );
+                source = await FsInterface.remoteJSON( file );
             } else {
-                source = await this.fs.readJSON( file );
+                source = await FsInterface.readJSON( file );
             }
         } catch ( e ) {
             this.error( new TwigHouseException( 'Failed to read page JSON at: ' + file, e ) );
@@ -1159,19 +1143,19 @@ class TwigHouse {
         const frag_path = path.join( this.getPath( 'fragments' ), name + '.json' );
         let exists = false, json_exists = null;
         if ( isUrl( frag_path ) ) {
-            json_exists = await this.fs.remoteJSON( frag_path );
+            json_exists = await FsInterface.remoteJSON( frag_path );
             if ( json_exists && typeof json_exists === 'object' && Object.keys( json_exists ).length ) {
                 exists = true;
             }
         } else {
-            exists = await this.fs.exists( frag_path );
+            exists = await FsInterface.exists( frag_path );
         }
         if ( exists ) {
             let json;
             if ( json_exists ) {
                 json = json_exists;
             } else {
-                json = await this.fs.readJSON( frag_path );
+                json = await FsInterface.readJSON( frag_path );
             }
             if ( json ) {
                 this._fragments[ name ] = json;
@@ -1228,7 +1212,7 @@ class TwigHouse {
             const { dir } = path.parse( doc_path );
 
             // Ensure directory
-            const dir_available = await this.fs.dir( path.resolve( dir ) );
+            const dir_available = await FsInterface.dir( path.resolve( dir ) );
             if ( !dir_available || dir_available instanceof Error ) {
                 this.error( new TwigHouseException( 'Failed to create directory: ' + dir, dir_available ) );
                 continue;
@@ -1248,7 +1232,7 @@ class TwigHouse {
             }
 
             // Write document and notify if requested
-            const wrote = await this.fs.write( doc_path, doc );
+            const wrote = await FsInterface.write( doc_path, doc );
             if ( wrote instanceof Error ) {
                 this.error( wrote );
             }
@@ -1304,7 +1288,7 @@ class TwigHouse {
                 this.error( new TwigHouseException( 'Cannot load template from url: ' + src ), true );
 
             } else {
-                path_exists = await this.fs.exists( src );
+                path_exists = await FsInterface.exists( src );
             }
 
             // Set available

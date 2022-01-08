@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.9.0
+- Updated node-cfx and node-util.
+
 ## 0.8.11
  - Removed unused, helper functions and classes in favor of versions from @squirrel-forge/node-util module.
  - Switched to safer instanceof check from *Exception* to *Error*.
