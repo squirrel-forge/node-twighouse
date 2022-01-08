@@ -842,6 +842,3 @@ Whenever there is time and space. Bugs and fixes will always get priority above 
  - Some useful twig extensions? ideas?
 
 **A note on the side:** TwigHouse will *probably never* implement any sass, javascript or similar compile features, since it is meant for templating and does not want solve problems that belong elsewhere.
-
-
-scheidungs papiere
