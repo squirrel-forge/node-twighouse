@@ -1,7 +1,7 @@
 /**
  * Requires
  */
-const isPojo = require( '../fn/isPojo' );
+const { isPojo } = require( '@squirrel-forge/node-util' );
 
 /**
  * Get property compare function

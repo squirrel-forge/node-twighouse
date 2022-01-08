@@ -1,7 +1,7 @@
 /**
  * Requires
  */
-const isUrl = require( '../fn/isUrl' );
+const { isUrl } = require( '@squirrel-forge/node-util' );
 
 /**
  * Get property value from document
@@ -16,9 +16,11 @@ function getFromReference( ref, type, twigH ) {
         if ( typeof doc[ type ] !== 'undefined' ) {
             return doc[ type ];
         }
-        twigH.error( new twigH.constructor.TwigHouseDirectiveException( 'Property "' + type + '" does not exist on document: ' + ref ), true );
+        twigH.error( new twigH.constructor.TwigHouseDirectiveException(
+            'Property "' + type + '" does not exist on document: ' + ref ), true );
     } else if ( !isUrl( ref ) && ref[ 0 ] !== '/' ) {
-        twigH.warn( new twigH.constructor.TwigHouseDirectiveWarning( 'Could not fetch "' + type + '" from document not found: ' + ref ) );
+        twigH.warn( new twigH.constructor.TwigHouseDirectiveWarning(
+            'Could not fetch "' + type + '" from document not found: ' + ref ) );
     }
 }
 
