@@ -1,7 +1,9 @@
 # Changelog
 
 ## 0.9.0
-- Updated node-cfx and node-util.
+ - Updated all dependencies.
+ - Fixed missing FsInterface office.
+ - Added *tagAttributes* directive as a helper for twig attributes rendering.
 
 ## 0.8.11
  - Removed unused, helper functions and classes in favor of versions from @squirrel-forge/node-util module.
