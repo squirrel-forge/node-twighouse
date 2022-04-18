@@ -464,6 +464,64 @@ Array of objects:
 
 ```
 
+#### Directive tagAttributes
+Creates a HTMLAttributes object for improved attribute handling in twig templates.
+
+*Directive arguments:*
+
+| Name  | Description                                                         |
+|-------|---------------------------------------------------------------------|
+| read  | Property to read attributes data from, default: {read/'attributes'} |
+| write | Property to set value on, default: {read/'attribute'}               |
+
+Single object:
+```
+// Input
+{
+   "__directives": ["tagAttributes:attributes"],
+   "attributes": {
+      "id": "element-id",
+      "class": ["class-a", "class-b"],
+   }
+}
+
+// Result
+{
+   "attributes": HTMLAttributes{}
+}
+```
+
+Array of objects:
+```
+// Input
+{
+   "__directives": ["tagAttributes:items"],
+   "items": [
+      {"attributes":{"class": "class-a"}},
+      {"attributes":{"id": "some-element-id"}}
+   ]
+}
+
+// Result
+{
+   "items": [
+      {"attributes": HTMLAttributes{}},
+      {"attributes": HTMLAttributes{}}
+   ]
+}
+```
+
+Object methods available inside twig:
+```
+attributes : {
+   set( name, value ) : attributes
+   has( name ) : boolean
+   addClass( classname ) : attributes
+   addClasses( classnames ) : attributes
+   toString() : string
+}
+```
+
 ## Templates
 
 The templates structure is all yours, following the default [loading pattern](#loading-templates), which can be modified via the [plugin template](#plugin-template) method with a [plugin](#plugins) to load whatever you like.
