@@ -4,7 +4,7 @@
 const path = require( 'path' );
 const copy = require( 'recursive-copy' );
 const { cfx } = require( '@squirrel-forge/node-cfx' );
-const { CliInput, isUrl } = require( '@squirrel-forge/node-util' );
+const { CliInput, FsInterface, isUrl } = require( '@squirrel-forge/node-util' );
 const TwigHouse = require( './classes/TwigHouse' );
 
 /**
@@ -127,9 +127,7 @@ module.exports = async function cli() {
         const pkg = require( path.join( __dirname, '../', 'package.json' ) );
         cfx.success( pkg.name + '@' + pkg.version + ' [help]' );
         cfx.log( '' );
-        const FsInterface = require( './classes/FsInterface' );
-        const fs = new FsInterface();
-        const readme = await fs.readText( path.join( __dirname, '../', 'README.md' ) );
+        const readme = await FsInterface.readText( path.join( __dirname, '../', 'README.md' ) );
         if ( readme ) {
 
             // Get only the arguments and options part of the readme and split by newlines
