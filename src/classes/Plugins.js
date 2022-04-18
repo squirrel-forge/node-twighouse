@@ -2,8 +2,7 @@
  * Requires
  */
 const path = require( 'path' );
-const { Exception } = require( '@squirrel-forge/node-util' );
-const { isPojo } = require( '@squirrel-forge/node-util' );
+const { Exception, isPojo } = require( '@squirrel-forge/node-util' );
 
 /**
  * Plugin exception
