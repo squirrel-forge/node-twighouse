@@ -299,7 +299,7 @@ class TwigHouse {
          * @property
          * @type {string[]}
          */
-        this._builtinDirectives = [ 'setFromDoc', 'isDocValue', 'imageData', 'sort' ];
+        this._builtinDirectives = [ 'setFromDoc', 'isDocValue', 'imageData', 'sort', 'tagAttributes' ];
 
         /**
          * Compare function reference
