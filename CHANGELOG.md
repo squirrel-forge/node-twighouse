@@ -4,6 +4,7 @@
  - Updated all dependencies.
  - Fixed missing FsInterface office.
  - Added *tagAttributes* directive as a helper for twig attributes rendering.
+ - Improved data loading and directive error origin declaration.
 
 ## 0.8.11
  - Removed unused, helper functions and classes in favor of versions from @squirrel-forge/node-util module.
