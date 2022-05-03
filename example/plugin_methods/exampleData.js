@@ -2,6 +2,7 @@
  * Requires
  */
 const path = require( 'path' );
+const { FsInterface } = require( '@squirrel-forge/node-util' );
 
 /**
  * Count object/properties array/length
@@ -51,7 +52,7 @@ module.exports = async function exampleData( ref, data, twigH ) {
 
     // Add a generic block from the plugin
     if ( data.content instanceof Array ) {
-        const pkg = await twigH.fs.readJSON( path.join( twigH.installDirectory, 'package.json' ) );
+        const pkg = await FsInterface.readJSON( path.join( twigH.installDirectory, 'package.json' ) );
         data.content.push( {
             '__component' : 'section',
             'content' : `<hr /><p><small>This page was generated using <a href="${pkg.homepage}" target="_blank">${pkg.name}@${pkg.version}</a></small></p>`

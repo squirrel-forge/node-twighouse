@@ -2,6 +2,7 @@
  * Requires
  */
 const path = require( 'path' );
+const { FsInterface } = require( '@squirrel-forge/node-util' );
 
 /**
  * Directive: load text from TwigHouse install
@@ -14,7 +15,7 @@ const path = require( 'path' );
  */
 module.exports = async function exampleDirectiveAsync( target, key, parent, doc, twigH ) {
     const text_path = path.join( twigH.installDirectory, target );
-    parent[ key ] = await twigH.fs.readText( text_path );
+    parent[ key ] = await FsInterface.readText( text_path );
     if ( twigH._config.verbose ) {
         const current_count = twigH.directiveStats[ 'loadFromTwigHouse' ] || 0;
         twigH.info( 'ExamplePlugin Directive [loadFromTwigHouse] >>> Total calls: ' + current_count );
