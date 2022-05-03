@@ -157,7 +157,7 @@ class HTMLAttributes {
                     output = output ? 'true' : 'false';
                 } else if ( output instanceof Array && output.every( ( v ) => { return typeof v === 'string'; } ) ) {
                     output = output.join( ' ' );
-                } else if ( to !== 'string' ) {
+                } else if ( to !== 'string' && to !== 'number' ) {
                     output = JSON.stringify( output );
                     quotes = '\'';
                 }
