@@ -37,7 +37,7 @@
     "node": ">= 10.0.0"
   },
   "peerDependencies": {
-    "showdown": "^1.9.1"
+    "showdown": "^1.9.x"
   },
   "peerDependenciesMeta": {
     "showdown": {
@@ -45,18 +45,18 @@
     }
   },
   "dependencies": {
-    "@squirrel-forge/node-cfx": "^1.2.1",
-    "@squirrel-forge/node-util": "^1.4.2",
-    "cli-spinner": "^0.2.10",
-    "directory-tree": "^3.2.2",
-    "html-minifier": "^4.0.0",
-    "intercept-stdout": "^0.1.2",
-    "is-installed-globally": "^0.4.0",
-    "recursive-copy": "^2.0.14",
-    "twig": "^1.15.4"
+    "@squirrel-forge/node-cfx": "^1.x",
+    "@squirrel-forge/node-util": "^1.x",
+    "cli-spinner": "^0.2.x",
+    "directory-tree": "^3.x",
+    "html-minifier": "^4.x",
+    "intercept-stdout": "^0.1.x",
+    "is-installed-globally": "^0.4.x",
+    "recursive-copy": "^2.x",
+    "twig": "^1.x"
   },
   "optionalDependencies": {
-    "file-type": "^16.5.3",
-    "image-size": "^1.0.1"
+    "file-type": "^16.x",
+    "image-size": "^1.x"
   }
 }
