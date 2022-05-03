@@ -20,7 +20,7 @@ try {
  */
 module.exports = function exampleDirectiveSync( text, key, parent, doc, twigH ) {
     if ( !showdown ) {
-        twigH.warn( new twigH.constructor.TwigHouseWarning( 'Directive showdownConvert requires optional module: showdown ^1.9.1' ) );
+        twigH.warn( new twigH.constructor.TwigHouseWarning( 'Directive showdownConvert requires optional module: showdown ^2.x' ) );
         return text;
     }
     const converter = new showdown.Converter( {

@@ -6,6 +6,7 @@
   "scripts": {
     "setup": "node src/install.js",
     "postinstall": "npm run-script setup",
+    "update-docs": "cd example && ../bin/cli ../docs -m -i --dev",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {
@@ -37,7 +38,7 @@
     "node": ">= 10.0.0"
   },
   "peerDependencies": {
-    "showdown": "^1.9.x"
+    "showdown": "^2.x"
   },
   "peerDependenciesMeta": {
     "showdown": {
