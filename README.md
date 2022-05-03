@@ -21,7 +21,7 @@ To see a working example run following commands inside an empty directory.
 The example uses directives and the showdown module, included as a dev dependency, to render this README.md to html.
 To use the example you must install the dev dependencies or manually install showdown, it is neither needed nor required for twighouse.
 ```
-npm i showdown@1.9.1
+npm i showdown
 ```
 
 Then run the commands to deploy the example and render it. 
