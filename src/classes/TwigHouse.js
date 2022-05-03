@@ -997,7 +997,7 @@ class TwigHouse {
             return null;
         }
         const compiled = {};
-        await this.resolvePageJsonTree( source, compiled, doc );
+        await this.resolvePageJsonTree( source, compiled, doc, [ doc.ref ] );
         return compiled;
     }
 
@@ -1007,11 +1007,12 @@ class TwigHouse {
      * @param {Array|Object} source - JSON source
      * @param {Array|Object} compiled - Target reference
      * @param {TwigHouseDocument} doc - Document object
+     * @param {Array<string>} cpath - Current path references
      * @param {Array<string>} recursion - Fragment recursion references
      * @throws {Exception}
      * @return {Promise<void>} - Possibly throws errors in strict mode
      */
-    async resolvePageJsonTree( source, compiled, doc, recursion = [] ) {
+    async resolvePageJsonTree( source, compiled, doc, cpath, recursion = [] ) {
         const is_array = source instanceof Array;
         if ( is_array || isPojo( source ) ) {
             const frp = this._config.fragmentProperty;
@@ -1023,18 +1024,18 @@ class TwigHouse {
 
                     // Since we could load the fragment we need to check for recursion
                     if ( recursion.length && recursion.includes( source[ frp ] ) ) {
-                        this.error( new TwigHouseException( 'JSON fragment circular reference detected: '
-                            + recursion.join( ' > ' ) + ' > ' + source[ frp ] ), true );
+                        this.error( new TwigHouseException( 'JSON fragment circular reference detected: "'
+                            + recursion.join( ' > ' ) + ' > ' + source[ frp ] + '" in: ' + cpath.join( '.' ) ), true );
                     }
 
                     // Add the fragment reference to the recursion check and resolve it
                     recursion.push( source[ frp ] );
-                    await this.resolvePageJsonTree( fragment, compiled, doc, recursion );
+                    await this.resolvePageJsonTree( fragment, compiled, doc, [ ...cpath, '[' + source[ frp ] + ']' ], recursion );
                 } else {
 
                     // Set an error array on the current object
                     compiled.__error = compiled.__error || [];
-                    compiled.__error.push( 'Failed to resolve fragment: ' + source[ frp ] );
+                    compiled.__error.push( 'Failed to resolve fragment: "' + source[ frp ] + '" in: ' + cpath.join( '.' ) );
 
                     // Silence, notify or throw in strict mode
                     this.error( new TwigHouseException( compiled.__error[ compiled.__error.length - 1 ] ) );
@@ -1056,12 +1057,12 @@ class TwigHouse {
                     compiled[ key ] = value;
                 }
                 if ( compiled[ key ] !== value ) {
-                    await this.resolvePageJsonTree( value, compiled[ key ], doc );
+                    await this.resolvePageJsonTree( value, compiled[ key ], doc, [ ...cpath, key ] );
                 }
             }
 
             // Process directives
-            await this.processDirectives( compiled, doc );
+            await this.processDirectives( compiled, doc, cpath );
         }
     }
 
@@ -1070,10 +1071,12 @@ class TwigHouse {
      * @public
      * @param {Object} compiled - Compiled object
      * @param {TwigHouseDocument} doc - TwigHouseDocument object
+     * @param {Array<string>} cpath - Current path references
      * @throws {Exception}
      * @return {Promise<void>} - Possibly throws errors in strict mode
      */
-    async processDirectives( compiled, doc ) {
+    async processDirectives( compiled, doc, cpath ) {
+        const error_origin = ' in: ' + cpath.join( '.' );
         if ( this._config.processDirectives && compiled[ this._config.directivesProperty ] instanceof Array ) {
             const directives = compiled[ this._config.directivesProperty ];
             for ( let i = 0; i < directives.length; i++ ) {
@@ -1084,18 +1087,17 @@ class TwigHouse {
                     // Unregistered directive lets notify and skip along to the next
                     if ( this._config.ignoreDirectives ) {
                         if ( this._config.verbose ) {
-                            this.info( 'Skipping undefined directive: ' + name );
+                            this.info( 'Skipping undefined directive: "' + name + '"' + error_origin );
                         }
                     } else {
-                        this.warn( new TwigHouseWarning( 'Directive not defined: ' + name ), false, true );
+                        this.warn( new TwigHouseWarning( 'Directive not defined: "' + name + '"' + error_origin ), false, true );
                     }
                     continue;
                 }
 
                 // Notify target property not set
                 if ( typeof compiled[ key ] === 'undefined' ) {
-                    const notDefined = 'Directive property not defined: ' + name + '@' + key
-                        + ' in document: ' + doc.ref;
+                    const notDefined = 'Directive property not defined: "' + name + '@' + key + '"' + error_origin;
                     this.warn( new TwigHouseWarning( notDefined ), false, true );
                 }
 
@@ -1105,7 +1107,7 @@ class TwigHouse {
                 try {
                     stats = await this.plugins.run( method, plugin_args );
                 } catch ( e ) {
-                    this.error( new TwigHouseException( 'Directive "' + name + '" failed in: ' + doc.ref, e ) );
+                    this.error( new TwigHouseException( 'Directive failed "' + name + '"' + error_origin, e ) );
                 }
                 if ( !this.directiveStats[ name ] ) {
                     this.directiveStats[ name ] = 0;
