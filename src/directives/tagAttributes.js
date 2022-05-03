@@ -46,12 +46,16 @@ module.exports = function tagAttributes(
         write = write || read;
         for ( let i = 0; i < items.length; i++ ) {
             const v = items[ i ][ read ];
-            if ( isPojo( v ) ) {
+            if ( v === null || isPojo( v ) || v instanceof Array || [ 'string', 'undefined' ].includes( typeof v ) ) {
                 items[ i ][ write ] = getAttributesObject( v, doc, twigH );
+            } else if ( !( v instanceof HTMLAttributes ) ) {
+                twigH.warn( new twigH.constructor.TwigHouseDirectiveWarning( 'Invalid attributes source type: ' + typeof v ) );
             }
         }
-    } else if ( isPojo( items ) ) {
+    } else if ( items === null || isPojo( items ) || typeof items === 'string' ) {
         write = write || read || key;
         parent[ write ] = getAttributesObject( items, doc, twigH );
+    } else if ( !( items instanceof HTMLAttributes ) ) {
+        twigH.warn( new twigH.constructor.TwigHouseDirectiveWarning( 'Invalid attributes source type: ' + typeof items ) );
     }
 };
